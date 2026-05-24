@@ -1,5 +1,5 @@
 import { AlertCircle, Sparkles, Users } from 'lucide-react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -17,12 +17,7 @@ import { getApiErrorMessage } from '../../utils/http'
 import { useDialogA11y } from '../../hooks/useDialogA11y'
 import { PageSkeleton } from '../../components/common/PageSkeleton'
 
-const bookingSchema = z.object({
-  customerName: z.string().min(2, 'Name is required (at least 2 characters).').max(180),
-  customerEmail: z.string().email('Please enter a valid email address.').max(220),
-})
 
-type BookingForm = z.infer<typeof bookingSchema>
 
 export function OfferDetails() {
   const { offerId } = useParams<{ offerId: string }>()
@@ -267,28 +262,43 @@ interface BookingModalProps {
 
 function BookingModal({ isOpen, onClose, offerId, slotId, slot }: BookingModalProps) {
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const [concurrencyError, setConcurrencyError] = useState<string | null>(null)
 
   const dialogRef = useDialogA11y<HTMLDivElement>({ isOpen, onClose })
 
-  const form = useForm<BookingForm>({
-    resolver: zodResolver(bookingSchema),
+  const bookingSchema = z.object({
+    customerName: z.string().min(2, 'Name is required (at least 2 characters).').max(180),
+    customerEmail: z.string().email('Please enter a valid email address.').max(220).optional().or(z.literal('')),
+    customerPhone: z.string().min(10, 'Phone number must be at least 10 digits.').max(40),
+    peopleCount: z.coerce.number().int().min(1, 'Must book for at least 1 person.').max(slot.availableCount, `Only ${slot.availableCount} seats left in this slot.`),
+    specialNote: z.string().max(1000).optional(),
+  })
+
+  const form = useForm<z.infer<typeof bookingSchema>>({
+    resolver: zodResolver(bookingSchema) as any,
     defaultValues: {
       customerName: '',
       customerEmail: '',
+      customerPhone: '',
+      peopleCount: 1,
+      specialNote: '',
     },
   })
 
   const bookingMutation = useMutation({
-    mutationFn: async (values: BookingForm) => {
+    mutationFn: async (values: z.infer<typeof bookingSchema>) => {
       return createBooking({
         offerSlotId: slotId,
         customerName: values.customerName,
-        customerEmail: values.customerEmail,
+        customerEmail: values.customerEmail || null,
+        customerPhone: values.customerPhone,
+        peopleCount: values.peopleCount,
+        specialNote: values.specialNote || null,
       })
     },
     onSuccess: (response) => {
-      if (!response.succeeded) {
+      if (!response.succeeded || !response.data) {
         toast.error(response.message ?? 'Booking failed.')
         return
       }
@@ -296,6 +306,7 @@ function BookingModal({ isOpen, onClose, offerId, slotId, slot }: BookingModalPr
       toast.success('Your slot has been successfully reserved!')
       void queryClient.invalidateQueries({ queryKey: ['slots', offerId] })
       onClose()
+      navigate(`/booking/confirmation/${response.data.id}`)
     },
     onError: async (error: any) => {
       // 1. Differentiated Concurrency Lock UX
@@ -348,6 +359,7 @@ function BookingModal({ isOpen, onClose, offerId, slotId, slot }: BookingModalPr
             <div className="rounded-md bg-surface p-3 text-xs text-muted border border-border/50">
               <p className="font-medium text-ink">Selected Schedule:</p>
               <p className="mt-1">{formatDateTime(slot.startsAt)}</p>
+              <p className="mt-0.5 text-2xs text-primary-700 font-semibold">{slot.availableCount} seats remaining</p>
             </div>
 
             <label className="block">
@@ -366,7 +378,22 @@ function BookingModal({ isOpen, onClose, offerId, slotId, slot }: BookingModalPr
             </label>
 
             <label className="block">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted">Email Address</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted">Phone Number</span>
+              <input
+                className="mt-1.5 h-10 w-full rounded-md border border-border bg-white px-3 text-sm text-ink transition placeholder:text-muted/65 hover:border-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                placeholder="e.g. +91 9876543210"
+                disabled={bookingMutation.isPending}
+                {...form.register('customerPhone')}
+              />
+              {form.formState.errors.customerPhone ? (
+                <span className="mt-1 block text-xs text-red-600">
+                  {form.formState.errors.customerPhone.message}
+                </span>
+              ) : null}
+            </label>
+
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted">Email Address (Optional)</span>
               <input
                 className="mt-1.5 h-10 w-full rounded-md border border-border bg-white px-3 text-sm text-ink transition placeholder:text-muted/65 hover:border-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
                 type="email"
@@ -377,6 +404,38 @@ function BookingModal({ isOpen, onClose, offerId, slotId, slot }: BookingModalPr
               {form.formState.errors.customerEmail ? (
                 <span className="mt-1 block text-xs text-red-600">
                   {form.formState.errors.customerEmail.message}
+                </span>
+              ) : null}
+            </label>
+
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted">Number of People</span>
+              <input
+                className="mt-1.5 h-10 w-full rounded-md border border-border bg-white px-3 text-sm text-ink transition placeholder:text-muted/65 hover:border-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                type="number"
+                min="1"
+                max={slot.availableCount}
+                disabled={bookingMutation.isPending}
+                {...form.register('peopleCount')}
+              />
+              {form.formState.errors.peopleCount ? (
+                <span className="mt-1 block text-xs text-red-600">
+                  {form.formState.errors.peopleCount.message}
+                </span>
+              ) : null}
+            </label>
+
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted">Special Note (Optional)</span>
+              <textarea
+                className="mt-1.5 w-full rounded-md border border-border bg-white p-3 text-sm text-ink transition placeholder:text-muted/65 hover:border-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 h-20 resize-none"
+                placeholder="Any special instructions or preferences..."
+                disabled={bookingMutation.isPending}
+                {...form.register('specialNote')}
+              />
+              {form.formState.errors.specialNote ? (
+                <span className="mt-1 block text-xs text-red-600">
+                  {form.formState.errors.specialNote.message}
                 </span>
               ) : null}
             </label>

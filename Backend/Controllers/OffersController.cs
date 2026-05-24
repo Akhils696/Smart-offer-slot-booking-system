@@ -9,17 +9,28 @@ using SmartOfferBookingSystem.Services;
 namespace SmartOfferBookingSystem.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/offers")]
+[Route("api/offer")]
 [Authorize(Roles = "Admin,BusinessOwner")]
 public sealed class OffersController(OfferService offerService) : ControllerBase
 {
     [HttpGet]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<PagedResult<OfferSummaryDto>>), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse<PagedResult<OfferSummaryDto>>>> List(
         [FromQuery] OfferQueryDto query,
         CancellationToken cancellationToken)
     {
-        var offers = await offerService.ListAsync(User.GetRequiredUserId(), User.GetRequiredRole(), query, cancellationToken);
+        var userId = Guid.Empty;
+        var role = UserRole.Customer;
+
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            userId = User.GetRequiredUserId();
+            role = User.GetRequiredRole();
+        }
+
+        var offers = await offerService.ListAsync(userId, role, query, cancellationToken);
         return Ok(ApiResponse<PagedResult<OfferSummaryDto>>.Success(offers));
     }
 

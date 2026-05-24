@@ -102,7 +102,7 @@ public sealed class SlotService(
             throw new InvalidOperationException($"Slot time must be within parent offer range ({slot.Offer.StartsAt:g} to {slot.Offer.EndsAt:g}).");
         }
 
-        var activeBookingsCount = slot.Bookings.Count(b => b.Status != BookingStatus.Cancelled);
+        var activeBookingsCount = slot.BookedCount;
 
         // Integrity Rule: Cannot reduce capacity below reserved seat counts
         if (request.Capacity < activeBookingsCount)
@@ -127,7 +127,6 @@ public sealed class SlotService(
         CancellationToken cancellationToken)
     {
         var slot = await dbContext.OfferSlots
-            .Include(s => s.Bookings)
             .Include(s => s.Offer)
             .ThenInclude(o => o.Business)
             .SingleOrDefaultAsync(s => s.Id == slotId, cancellationToken);
@@ -142,7 +141,7 @@ public sealed class SlotService(
             throw new InvalidOperationException("You do not have permission to delete this slot.");
         }
 
-        var activeBookingsCount = slot.Bookings.Count(b => b.Status != BookingStatus.Cancelled);
+        var activeBookingsCount = slot.BookedCount;
 
         // Integrity Guard: Cannot delete slots with active reservations
         if (activeBookingsCount > 0)
@@ -156,7 +155,7 @@ public sealed class SlotService(
 
     private SlotSummaryDto ToSummary(OfferSlot slot)
     {
-        var activeBookings = slot.Bookings?.Count(b => b.Status != BookingStatus.Cancelled) ?? 0;
+        var activeBookings = slot.BookedCount;
         var available = Math.Max(slot.Capacity - activeBookings, 0);
 
         string status = "Active";

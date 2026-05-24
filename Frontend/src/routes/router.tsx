@@ -14,6 +14,7 @@ const Bookings = lazy(() => import('../pages/admin/Bookings').then(m => ({ defau
 const Login = lazy(() => import('../pages/auth/Login').then(m => ({ default: m.Login })))
 const Home = lazy(() => import('../pages/public/Home').then(m => ({ default: m.Home })))
 const OfferDetails = lazy(() => import('../pages/public/OfferDetails').then(m => ({ default: m.OfferDetails })))
+const BookingConfirmation = lazy(() => import('../pages/public/BookingConfirmation').then(m => ({ default: m.BookingConfirmation })))
 
 export const router = createBrowserRouter([
   {
@@ -24,6 +25,7 @@ export const router = createBrowserRouter([
         children: [
           { path: ROUTES.public.home, element: <Suspense fallback={<PageSkeleton />}><Home /></Suspense> },
           { path: ROUTES.public.offerDetails, element: <Suspense fallback={<PageSkeleton />}><OfferDetails /></Suspense> },
+          { path: ROUTES.public.bookingConfirmation, element: <Suspense fallback={<PageSkeleton />}><BookingConfirmation /></Suspense> },
         ],
       },
       { path: ROUTES.auth.login, element: <Suspense fallback={<PageSkeleton />}><Login /></Suspense> },

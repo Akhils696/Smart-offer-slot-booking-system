@@ -2,6 +2,7 @@ export const ROUTES = {
   public: {
     home: '/',
     offerDetails: '/offers/:offerId',
+    bookingConfirmation: '/booking/confirmation/:bookingId',
   },
   auth: {
     login: '/login',

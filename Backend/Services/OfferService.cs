@@ -26,6 +26,10 @@ public sealed class OfferService(
         {
             offers = offers.Where(item => item.Business.OwnerId == userId);
         }
+        else if (role == UserRole.Customer)
+        {
+            offers = offers.Where(item => item.Status == OfferStatus.Active && item.EndsAt > clock.UtcNow);
+        }
 
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
@@ -43,6 +47,39 @@ public sealed class OfferService(
         if (!string.IsNullOrWhiteSpace(query.Status) && Enum.TryParse<OfferStatus>(query.Status, true, out var status))
         {
             offers = offers.Where(item => item.Status == status);
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.BusinessType) && Enum.TryParse<BusinessType>(query.BusinessType, true, out var bType))
+        {
+            offers = offers.Where(item => item.Business.BusinessType == bType);
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.Category))
+        {
+            var category = query.Category.Trim().ToLowerInvariant();
+            offers = offers.Where(item => item.Category.ToLower() == category);
+        }
+
+        if (query.MaxPrice.HasValue)
+        {
+            offers = offers.Where(item => item.OfferPrice <= query.MaxPrice.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.Date))
+        {
+            if (DateTimeOffset.TryParse(query.Date, out var filterDate))
+            {
+                var filterDateStart = filterDate.Date;
+                var filterDateEnd = filterDateStart.AddDays(1);
+                offers = offers.Where(item =>
+                    item.StartsAt < filterDateEnd &&
+                    item.EndsAt >= filterDateStart);
+            }
+        }
+
+        if (query.AvailableOnly == true)
+        {
+            offers = offers.Where(item => item.Slots.Any(s => s.Capacity > s.BookedCount && s.EndsAt > clock.UtcNow));
         }
 
         var page = Math.Max(query.Page, 1);
@@ -76,6 +113,8 @@ public sealed class OfferService(
             throw new InvalidOperationException("You cannot add offers to this business.");
         }
 
+        Enum.TryParse<OfferStatus>(request.Status, true, out var status);
+
         var now = clock.UtcNow;
         var offer = new Offer
         {
@@ -85,7 +124,11 @@ public sealed class OfferService(
             Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim(),
             OriginalPrice = request.OriginalPrice,
             OfferPrice = request.OfferPrice,
-            Status = OfferStatus.Draft,
+            Category = request.Category.Trim(),
+            DiscountPercentage = request.OriginalPrice > 0 ? Math.Round((request.OriginalPrice - request.OfferPrice) / request.OriginalPrice * 100, 2) : 0,
+            TermsAndConditions = string.IsNullOrWhiteSpace(request.TermsAndConditions) ? null : request.TermsAndConditions.Trim(),
+            MaxBookingPerCustomer = request.MaxBookingPerCustomer,
+            Status = status,
             StartsAt = request.StartsAt,
             EndsAt = request.EndsAt,
             CreatedAt = now,
@@ -131,12 +174,18 @@ public sealed class OfferService(
             throw new InvalidOperationException("You cannot move this offer to that business.");
         }
 
+        Enum.TryParse<OfferStatus>(request.Status, true, out var status);
+
         offer.BusinessId = business.Id;
         offer.Business = business;
         offer.Title = request.Title.Trim();
         offer.Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim();
         offer.OriginalPrice = request.OriginalPrice;
         offer.OfferPrice = request.OfferPrice;
+        offer.Category = request.Category.Trim();
+        offer.DiscountPercentage = request.OriginalPrice > 0 ? Math.Round((request.OriginalPrice - request.OfferPrice) / request.OriginalPrice * 100, 2) : 0;
+        offer.TermsAndConditions = string.IsNullOrWhiteSpace(request.TermsAndConditions) ? null : request.TermsAndConditions.Trim();
+        offer.MaxBookingPerCustomer = request.MaxBookingPerCustomer;
         offer.StartsAt = request.StartsAt;
         offer.EndsAt = request.EndsAt;
         offer.UpdatedAt = clock.UtcNow;
@@ -144,6 +193,10 @@ public sealed class OfferService(
         if (offer.EndsAt <= clock.UtcNow)
         {
             offer.Status = OfferStatus.Expired;
+        }
+        else
+        {
+            offer.Status = status;
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -237,6 +290,10 @@ public sealed class OfferService(
             offer.Description,
             offer.OriginalPrice,
             offer.OfferPrice,
+            offer.DiscountPercentage,
+            offer.Category,
+            offer.TermsAndConditions,
+            offer.MaxBookingPerCustomer,
             offer.Status.ToString(),
             offer.StartsAt,
             offer.EndsAt,

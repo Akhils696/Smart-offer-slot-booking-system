@@ -3,6 +3,7 @@ using System.Text.Json;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using SmartOfferBookingSystem.Common;
+using SmartOfferBookingSystem.Exceptions;
 
 namespace SmartOfferBookingSystem.Middleware;
 
@@ -16,32 +17,47 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
         }
         catch (ValidationException exception)
         {
-            logger.LogWarning("API validation failed: {Errors}", string.Join("; ", exception.Errors.Select(e => e.ErrorMessage)));
-            await WriteErrorAsync(context, HttpStatusCode.BadRequest, "Validation failed.", exception.Errors.Select(error => error.ErrorMessage));
+            logger.LogWarning("Validation failed: {Errors}", string.Join("; ", exception.Errors.Select(e => e.ErrorMessage)));
+            await WriteErrorAsync(context, HttpStatusCode.UnprocessableEntity, "Validation failed.", exception.Errors.Select(e => e.ErrorMessage));
+        }
+        catch (NotFoundException exception)
+        {
+            logger.LogWarning("Resource not found: {Message}", exception.Message);
+            await WriteErrorAsync(context, HttpStatusCode.NotFound, exception.Message);
+        }
+        catch (ConflictException exception)
+        {
+            logger.LogWarning("Conflict detected: {Message}", exception.Message);
+            await WriteErrorAsync(context, HttpStatusCode.Conflict, exception.Message);
+        }
+        catch (ForbiddenOperationException exception)
+        {
+            logger.LogWarning("Forbidden operation: {Message}", exception.Message);
+            await WriteErrorAsync(context, HttpStatusCode.Forbidden, exception.Message);
         }
         catch (DbUpdateConcurrencyException exception)
         {
-            logger.LogWarning(exception, "Database update concurrency conflict detected.");
-            await WriteErrorAsync(context, HttpStatusCode.Conflict, "This slot was just reserved by another customer. Please choose a different slot.");
-        }
-        catch (BadHttpRequestException exception)
-        {
-            logger.LogWarning(exception, "Bad HTTP request exception with status code {StatusCode}", exception.StatusCode);
-            await WriteErrorAsync(context, (HttpStatusCode)exception.StatusCode, exception.Message);
+            logger.LogWarning(exception, "Database concurrency conflict detected.");
+            await WriteErrorAsync(context, HttpStatusCode.Conflict, "This slot was just reserved by another customer. Please choose a different slot or refresh and try again.");
         }
         catch (InvalidOperationException exception)
         {
-            logger.LogWarning("API operational failure: {Message}", exception.Message);
-            await WriteErrorAsync(context, HttpStatusCode.BadRequest, exception.Message);
+            // Generic operational failures — business rule violations treated as 422
+            logger.LogWarning("Operational failure: {Message}", exception.Message);
+            await WriteErrorAsync(context, HttpStatusCode.UnprocessableEntity, exception.Message);
         }
         catch (Exception exception)
         {
-            logger.LogError(exception, "Unhandled system-wide exception in request pipeline");
-            await WriteErrorAsync(context, HttpStatusCode.InternalServerError, "An unexpected error occurred.");
+            logger.LogError(exception, "Unhandled exception in request pipeline at {Path}", context.Request.Path);
+            await WriteErrorAsync(context, HttpStatusCode.InternalServerError, "An unexpected error occurred. Please try again later.");
         }
     }
 
-    private static async Task WriteErrorAsync(HttpContext context, HttpStatusCode statusCode, string message, IEnumerable<string>? errors = null)
+    private static async Task WriteErrorAsync(
+        HttpContext context,
+        HttpStatusCode statusCode,
+        string message,
+        IEnumerable<string>? errors = null)
     {
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = (int)statusCode;

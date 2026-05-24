@@ -16,9 +16,21 @@ public sealed class CreateBookingRequestDtoValidator : AbstractValidator<CreateB
             .WithMessage("Customer name is required.");
 
         RuleFor(x => x.CustomerEmail)
-            .NotEmpty()
             .EmailAddress()
             .MaximumLength(220)
-            .WithMessage("Valid customer email is required.");
+            .When(x => !string.IsNullOrWhiteSpace(x.CustomerEmail))
+            .WithMessage("Invalid email format.");
+
+        RuleFor(x => x.CustomerPhone)
+            .NotEmpty()
+            .MaximumLength(40)
+            .WithMessage("Phone number is required.");
+
+        RuleFor(x => x.PeopleCount)
+            .GreaterThan(0)
+            .WithMessage("Must book for at least 1 person.");
+
+        RuleFor(x => x.SpecialNote)
+            .MaximumLength(1000);
     }
 }

@@ -26,6 +26,10 @@ const offerSchema = z
     description: z.string().max(1600).optional().or(z.literal('')),
     originalPrice: z.coerce.number().positive(),
     offerPrice: z.coerce.number().positive(),
+    category: z.string().min(1, 'Category is required.'),
+    termsAndConditions: z.string().max(1600).optional().or(z.literal('')),
+    maxBookingPerCustomer: z.coerce.number().int().min(1, 'Limit must be at least 1.'),
+    status: z.string().min(1, 'Status is required.'),
     startsAt: z.string().min(1),
     endsAt: z.string().min(1),
   })
@@ -100,6 +104,10 @@ export function Offers() {
       description: '',
       originalPrice: 0,
       offerPrice: 0,
+      category: '',
+      termsAndConditions: '',
+      maxBookingPerCustomer: 1,
+      status: 'Draft',
       startsAt: '',
       endsAt: '',
     },
@@ -113,6 +121,10 @@ export function Offers() {
         description: '',
         originalPrice: 0,
         offerPrice: 0,
+        category: '',
+        termsAndConditions: '',
+        maxBookingPerCustomer: 1,
+        status: 'Draft',
         startsAt: '',
         endsAt: '',
       })
@@ -125,6 +137,10 @@ export function Offers() {
       description: editing.description ?? '',
       originalPrice: editing.originalPrice,
       offerPrice: editing.offerPrice,
+      category: editing.category,
+      termsAndConditions: editing.termsAndConditions ?? '',
+      maxBookingPerCustomer: editing.maxBookingPerCustomer,
+      status: editing.status,
       startsAt: editing.startsAt.slice(0, 16),
       endsAt: editing.endsAt.slice(0, 16),
     })
@@ -426,6 +442,60 @@ export function Offers() {
                   className="mt-1.5 min-h-24 w-full rounded-md border border-border bg-white px-3 py-2 text-sm text-ink transition placeholder:text-muted/65 hover:border-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
                   placeholder="Describe your special offer and highlight slot details..."
                   {...form.register('description')}
+                />
+              </label>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted">Category</span>
+                  <input
+                    className="mt-1.5 h-10 w-full rounded-md border border-border bg-white px-3 text-sm text-ink transition placeholder:text-muted/65 hover:border-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    placeholder="e.g. Spa, Gym, Dining"
+                    {...form.register('category')}
+                  />
+                  {form.formState.errors.category ? <span className="mt-1 block text-xs text-red-600">{form.formState.errors.category.message}</span> : null}
+                </label>
+
+                <label className="block">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted">Max Booking Per Customer</span>
+                  <input
+                    className="mt-1.5 h-10 w-full rounded-md border border-border bg-white px-3 text-sm text-ink transition hover:border-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    type="number"
+                    min="1"
+                    placeholder="e.g. 1"
+                    {...form.register('maxBookingPerCustomer')}
+                  />
+                  {form.formState.errors.maxBookingPerCustomer ? <span className="mt-1 block text-xs text-red-600">{form.formState.errors.maxBookingPerCustomer.message}</span> : null}
+                </label>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted">Status</span>
+                  <select
+                    className="mt-1.5 h-10 w-full rounded-md border border-border bg-white px-3 text-sm text-ink transition hover:border-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    {...form.register('status')}
+                  >
+                    <option value="Draft">Draft</option>
+                    <option value="Active">Active</option>
+                    <option value="Paused">Paused</option>
+                    <option value="Expired">Expired</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </select>
+                  {form.formState.errors.status ? <span className="mt-1 block text-xs text-red-600">{form.formState.errors.status.message}</span> : null}
+                </label>
+
+                <div className="block">
+                  {/* Space for layout alignment or future fields */}
+                </div>
+              </div>
+
+              <label className="block">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted">Terms and Conditions</span>
+                <textarea
+                  className="mt-1.5 min-h-20 w-full rounded-md border border-border bg-white px-3 py-2 text-sm text-ink transition placeholder:text-muted/65 hover:border-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  placeholder="Specify any booking terms, cancellation policies..."
+                  {...form.register('termsAndConditions')}
                 />
               </label>
 

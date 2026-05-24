@@ -20,6 +20,17 @@ public sealed class BookingsController(BookingService bookingService) : Controll
         return Ok(ApiResponse<IReadOnlyCollection<BookingSummaryDto>>.Success(bookings));
     }
 
+    [HttpGet("{bookingId:guid}")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ApiResponse<BookingSummaryDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<BookingSummaryDto>>> GetById(
+        Guid bookingId,
+        CancellationToken cancellationToken)
+    {
+        var booking = await bookingService.GetByIdAsync(bookingId, cancellationToken);
+        return Ok(ApiResponse<BookingSummaryDto>.Success(booking));
+    }
+
     [HttpPost]
     [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<BookingSummaryDto>), StatusCodes.Status200OK)]

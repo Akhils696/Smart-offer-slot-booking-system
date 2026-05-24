@@ -5,7 +5,10 @@ import type { BookingSummary } from '../types/booking'
 export interface CreateBookingPayload {
   offerSlotId: string
   customerName: string
-  customerEmail: string
+  customerEmail?: string | null
+  customerPhone: string
+  peopleCount: number
+  specialNote?: string | null
 }
 
 export interface UpdateBookingStatusPayload {
@@ -20,6 +23,11 @@ export async function getBookings() {
 export async function createBooking(payload: CreateBookingPayload) {
   const response = await apiClient.post<ApiResponse<BookingSummary>>('/bookings', payload)
   return response.data
+}
+
+export async function getBookingById(bookingId: string) {
+  const response = await apiClient.get<ApiResponse<BookingSummary>>(`/bookings/${bookingId}`)
+  return response.data.data
 }
 
 export async function updateBookingStatus(bookingId: string, payload: UpdateBookingStatusPayload) {

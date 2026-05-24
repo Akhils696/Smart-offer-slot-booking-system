@@ -1,5 +1,6 @@
 using FluentValidation;
 using SmartOfferBookingSystem.DTOs.Offers;
+using SmartOfferBookingSystem.Models;
 
 namespace SmartOfferBookingSystem.Validators;
 
@@ -24,6 +25,21 @@ public sealed class UpsertOfferRequestDtoValidator : AbstractValidator<UpsertOff
             .GreaterThan(0)
             .LessThan(x => x.OriginalPrice)
             .WithMessage("Offer price must be lower than original price.");
+
+        RuleFor(x => x.Category)
+            .NotEmpty()
+            .MaximumLength(100);
+
+        RuleFor(x => x.TermsAndConditions)
+            .MaximumLength(2000);
+
+        RuleFor(x => x.MaxBookingPerCustomer)
+            .GreaterThan(0)
+            .WithMessage("Max bookings per customer must be at least 1.");
+
+        RuleFor(x => x.Status)
+            .NotEmpty()
+            .IsEnumName(typeof(OfferStatus), caseSensitive: false).WithMessage("Invalid Offer Status.");
 
         RuleFor(x => x.StartsAt)
             .LessThan(x => x.EndsAt)

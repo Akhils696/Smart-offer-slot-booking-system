@@ -8,7 +8,8 @@ using SmartOfferBookingSystem.Services;
 namespace SmartOfferBookingSystem.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/businesses")]
+[Route("api/business")]
 [Authorize(Roles = "Admin,BusinessOwner")]
 public sealed class BusinessesController(BusinessService businessService) : ControllerBase
 {
@@ -39,5 +40,15 @@ public sealed class BusinessesController(BusinessService businessService) : Cont
     {
         var result = await businessService.UpdateAsync(businessId, User.GetRequiredUserId(), User.GetRequiredRole(), request, cancellationToken);
         return Ok(ApiResponse<BusinessSummaryDto>.Success(result, "Business updated."));
+    }
+
+    [HttpDelete("{businessId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> Delete(
+        Guid businessId,
+        CancellationToken cancellationToken)
+    {
+        await businessService.DeleteAsync(businessId, User.GetRequiredUserId(), User.GetRequiredRole(), cancellationToken);
+        return NoContent();
     }
 }

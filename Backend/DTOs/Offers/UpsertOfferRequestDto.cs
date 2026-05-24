@@ -6,5 +6,9 @@ public sealed record UpsertOfferRequestDto(
     string? Description,
     decimal OriginalPrice,
     decimal OfferPrice,
+    string Category,
+    string? TermsAndConditions,
+    int MaxBookingPerCustomer,
+    string Status,
     DateTimeOffset StartsAt,
     DateTimeOffset EndsAt);
