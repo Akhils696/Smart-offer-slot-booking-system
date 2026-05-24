@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using SmartOfferBookingSystem.Common;
 using SmartOfferBookingSystem.Data.Context;
 using SmartOfferBookingSystem.Data.Seed;
 using SmartOfferBookingSystem.Extensions;
@@ -49,6 +50,27 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
             ClockSkew = TimeSpan.FromMinutes(2)
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnChallenge = context =>
+            {
+                context.HandleResponse();
+                context.Response.ContentType = "application/json";
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+
+                var response = ApiResponse<object>.Failure("Unauthorized access. Please log in again.");
+                return context.Response.WriteAsJsonAsync(response);
+            },
+            OnForbidden = context =>
+            {
+                context.Response.ContentType = "application/json";
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+
+                var response = ApiResponse<object>.Failure("You do not have permission to access this resource.");
+                return context.Response.WriteAsJsonAsync(response);
+            }
         };
     });
 

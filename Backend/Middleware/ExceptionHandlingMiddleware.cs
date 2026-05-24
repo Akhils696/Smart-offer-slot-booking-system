@@ -29,10 +29,7 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = (int)statusCode;
 
-        var response = new ErrorResponse(
-            context.TraceIdentifier,
-            message,
-            errors?.ToArray() ?? []);
+        var response = ApiResponse<object>.Failure(message, errors?.ToArray());
 
         await context.Response.WriteAsync(JsonSerializer.Serialize(response, new JsonSerializerOptions
         {
