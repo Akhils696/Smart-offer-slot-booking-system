@@ -59,7 +59,7 @@ public sealed class OfferService(
         return new PagedResult<OfferSummaryDto>(items, page, pageSize, totalCount);
     }
 
-    public async Task<ApiResponse<OfferSummaryDto>> CreateAsync(
+    public async Task<OfferSummaryDto> CreateAsync(
         Guid userId,
         UserRole role,
         UpsertOfferRequestDto request,
@@ -68,12 +68,12 @@ public sealed class OfferService(
         var business = await dbContext.Businesses.SingleOrDefaultAsync(item => item.Id == request.BusinessId, cancellationToken);
         if (business is null)
         {
-            return ApiResponse<OfferSummaryDto>.Failure("Business not found.");
+            throw new InvalidOperationException("Business not found.");
         }
 
         if (role == UserRole.BusinessOwner && business.OwnerId != userId)
         {
-            return ApiResponse<OfferSummaryDto>.Failure("You cannot add offers to this business.");
+            throw new InvalidOperationException("You cannot add offers to this business.");
         }
 
         var now = clock.UtcNow;
@@ -96,10 +96,10 @@ public sealed class OfferService(
         await dbContext.SaveChangesAsync(cancellationToken);
 
         offer.Business = business;
-        return ApiResponse<OfferSummaryDto>.Success(ToSummary(offer), "Offer created.");
+        return ToSummary(offer);
     }
 
-    public async Task<ApiResponse<OfferSummaryDto>> UpdateAsync(
+    public async Task<OfferSummaryDto> UpdateAsync(
         Guid offerId,
         Guid userId,
         UserRole role,
@@ -112,23 +112,23 @@ public sealed class OfferService(
 
         if (offer is null)
         {
-            return ApiResponse<OfferSummaryDto>.Failure("Offer not found.");
+            throw new InvalidOperationException("Offer not found.");
         }
 
         if (role == UserRole.BusinessOwner && offer.Business.OwnerId != userId)
         {
-            return ApiResponse<OfferSummaryDto>.Failure("You cannot modify this offer.");
+            throw new InvalidOperationException("You cannot modify this offer.");
         }
 
         var business = await dbContext.Businesses.SingleOrDefaultAsync(item => item.Id == request.BusinessId, cancellationToken);
         if (business is null)
         {
-            return ApiResponse<OfferSummaryDto>.Failure("Business not found.");
+            throw new InvalidOperationException("Business not found.");
         }
 
         if (role == UserRole.BusinessOwner && business.OwnerId != userId)
         {
-            return ApiResponse<OfferSummaryDto>.Failure("You cannot move this offer to that business.");
+            throw new InvalidOperationException("You cannot move this offer to that business.");
         }
 
         offer.BusinessId = business.Id;
@@ -148,10 +148,10 @@ public sealed class OfferService(
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return ApiResponse<OfferSummaryDto>.Success(ToSummary(offer), "Offer updated.");
+        return ToSummary(offer);
     }
 
-    public async Task<ApiResponse<OfferSummaryDto>> ChangeStatusAsync(
+    public async Task<OfferSummaryDto> ChangeStatusAsync(
         Guid offerId,
         Guid userId,
         UserRole role,
@@ -164,27 +164,27 @@ public sealed class OfferService(
 
         if (offer is null)
         {
-            return ApiResponse<OfferSummaryDto>.Failure("Offer not found.");
+            throw new InvalidOperationException("Offer not found.");
         }
 
         if (role == UserRole.BusinessOwner && offer.Business.OwnerId != userId)
         {
-            return ApiResponse<OfferSummaryDto>.Failure("You cannot modify this offer.");
+            throw new InvalidOperationException("You cannot modify this offer.");
         }
 
         if (status == OfferStatus.Active && offer.EndsAt <= clock.UtcNow)
         {
-            return ApiResponse<OfferSummaryDto>.Failure("Expired offers cannot be activated.");
+            throw new InvalidOperationException("Expired offers cannot be activated.");
         }
 
         offer.Status = status;
         offer.UpdatedAt = clock.UtcNow;
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return ApiResponse<OfferSummaryDto>.Success(ToSummary(offer), "Offer status updated.");
+        return ToSummary(offer);
     }
 
-    public async Task<ApiResponse<object>> DeleteAsync(
+    public async Task DeleteAsync(
         Guid offerId,
         Guid userId,
         UserRole role,
@@ -197,23 +197,21 @@ public sealed class OfferService(
 
         if (offer is null)
         {
-            return ApiResponse<object>.Failure("Offer not found.");
+            throw new InvalidOperationException("Offer not found.");
         }
 
         if (role == UserRole.BusinessOwner && offer.Business.OwnerId != userId)
         {
-            return ApiResponse<object>.Failure("You cannot delete this offer.");
+            throw new InvalidOperationException("You cannot delete this offer.");
         }
 
         if (offer.Slots.Count > 0)
         {
-            return ApiResponse<object>.Failure("Offers with slots cannot be deleted.");
+            throw new InvalidOperationException("Offers with slots cannot be deleted.");
         }
 
         dbContext.Offers.Remove(offer);
         await dbContext.SaveChangesAsync(cancellationToken);
-
-        return ApiResponse<object>.Success(new { }, "Offer deleted.");
     }
 
     private static OfferSummaryDto ToSummary(Offer offer) =>

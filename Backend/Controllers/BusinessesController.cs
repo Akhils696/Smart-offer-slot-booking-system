@@ -22,24 +22,22 @@ public sealed class BusinessesController(BusinessService businessService) : Cont
 
     [HttpPost]
     [ProducesResponseType(typeof(ApiResponse<BusinessSummaryDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<BusinessSummaryDto>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<BusinessSummaryDto>>> Create(
         [FromBody] UpsertBusinessRequestDto request,
         CancellationToken cancellationToken)
     {
         var result = await businessService.CreateAsync(User.GetRequiredUserId(), request, cancellationToken);
-        return result.Succeeded ? Ok(result) : BadRequest(result);
+        return Ok(ApiResponse<BusinessSummaryDto>.Success(result, "Business created."));
     }
 
     [HttpPut("{businessId:guid}")]
     [ProducesResponseType(typeof(ApiResponse<BusinessSummaryDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<BusinessSummaryDto>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<BusinessSummaryDto>>> Update(
         Guid businessId,
         [FromBody] UpsertBusinessRequestDto request,
         CancellationToken cancellationToken)
     {
         var result = await businessService.UpdateAsync(businessId, User.GetRequiredUserId(), User.GetRequiredRole(), request, cancellationToken);
-        return result.Succeeded ? Ok(result) : BadRequest(result);
+        return Ok(ApiResponse<BusinessSummaryDto>.Success(result, "Business updated."));
     }
 }

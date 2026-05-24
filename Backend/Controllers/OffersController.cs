@@ -25,51 +25,46 @@ public sealed class OffersController(OfferService offerService) : ControllerBase
 
     [HttpPost]
     [ProducesResponseType(typeof(ApiResponse<OfferSummaryDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<OfferSummaryDto>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<OfferSummaryDto>>> Create(
         [FromBody] UpsertOfferRequestDto request,
         CancellationToken cancellationToken)
     {
         var result = await offerService.CreateAsync(User.GetRequiredUserId(), User.GetRequiredRole(), request, cancellationToken);
-        return result.Succeeded ? Ok(result) : BadRequest(result);
+        return Ok(ApiResponse<OfferSummaryDto>.Success(result, "Offer created."));
     }
 
     [HttpPut("{offerId:guid}")]
     [ProducesResponseType(typeof(ApiResponse<OfferSummaryDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<OfferSummaryDto>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<OfferSummaryDto>>> Update(
         Guid offerId,
         [FromBody] UpsertOfferRequestDto request,
         CancellationToken cancellationToken)
     {
         var result = await offerService.UpdateAsync(offerId, User.GetRequiredUserId(), User.GetRequiredRole(), request, cancellationToken);
-        return result.Succeeded ? Ok(result) : BadRequest(result);
+        return Ok(ApiResponse<OfferSummaryDto>.Success(result, "Offer updated."));
     }
 
     [HttpPost("{offerId:guid}/activate")]
     [ProducesResponseType(typeof(ApiResponse<OfferSummaryDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<OfferSummaryDto>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<OfferSummaryDto>>> Activate(Guid offerId, CancellationToken cancellationToken)
     {
         var result = await offerService.ChangeStatusAsync(offerId, User.GetRequiredUserId(), User.GetRequiredRole(), OfferStatus.Active, cancellationToken);
-        return result.Succeeded ? Ok(result) : BadRequest(result);
+        return Ok(ApiResponse<OfferSummaryDto>.Success(result, "Offer activated."));
     }
 
     [HttpPost("{offerId:guid}/pause")]
     [ProducesResponseType(typeof(ApiResponse<OfferSummaryDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<OfferSummaryDto>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<OfferSummaryDto>>> Pause(Guid offerId, CancellationToken cancellationToken)
     {
         var result = await offerService.ChangeStatusAsync(offerId, User.GetRequiredUserId(), User.GetRequiredRole(), OfferStatus.Paused, cancellationToken);
-        return result.Succeeded ? Ok(result) : BadRequest(result);
+        return Ok(ApiResponse<OfferSummaryDto>.Success(result, "Offer paused."));
     }
 
     [HttpDelete("{offerId:guid}")]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<object>>> Delete(Guid offerId, CancellationToken cancellationToken)
     {
-        var result = await offerService.DeleteAsync(offerId, User.GetRequiredUserId(), User.GetRequiredRole(), cancellationToken);
-        return result.Succeeded ? Ok(result) : BadRequest(result);
+        await offerService.DeleteAsync(offerId, User.GetRequiredUserId(), User.GetRequiredRole(), cancellationToken);
+        return Ok(ApiResponse<object>.Success(new { }, "Offer deleted."));
     }
 }

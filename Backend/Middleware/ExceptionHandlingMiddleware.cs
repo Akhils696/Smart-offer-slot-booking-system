@@ -17,6 +17,14 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
         {
             await WriteErrorAsync(context, HttpStatusCode.BadRequest, "Validation failed.", exception.Errors.Select(error => error.ErrorMessage));
         }
+        catch (BadHttpRequestException exception)
+        {
+            await WriteErrorAsync(context, (HttpStatusCode)exception.StatusCode, exception.Message);
+        }
+        catch (InvalidOperationException exception)
+        {
+            await WriteErrorAsync(context, HttpStatusCode.BadRequest, exception.Message);
+        }
         catch (Exception exception)
         {
             logger.LogError(exception, "Unhandled API exception");

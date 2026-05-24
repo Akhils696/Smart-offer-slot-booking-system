@@ -33,7 +33,7 @@ public sealed class BusinessService(
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<ApiResponse<BusinessSummaryDto>> CreateAsync(
+    public async Task<BusinessSummaryDto> CreateAsync(
         Guid userId,
         UpsertBusinessRequestDto request,
         CancellationToken cancellationToken)
@@ -43,7 +43,7 @@ public sealed class BusinessService(
         var exists = await dbContext.Businesses.AnyAsync(item => item.Slug == slug, cancellationToken);
         if (exists)
         {
-            return ApiResponse<BusinessSummaryDto>.Failure("A business with this slug already exists.");
+            throw new InvalidOperationException("A business with this slug already exists.");
         }
 
         var now = clock.UtcNow;
@@ -62,10 +62,10 @@ public sealed class BusinessService(
         dbContext.Businesses.Add(business);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return ApiResponse<BusinessSummaryDto>.Success(ToSummary(business), "Business created.");
+        return ToSummary(business);
     }
 
-    public async Task<ApiResponse<BusinessSummaryDto>> UpdateAsync(
+    public async Task<BusinessSummaryDto> UpdateAsync(
         Guid businessId,
         Guid userId,
         UserRole role,
@@ -75,19 +75,19 @@ public sealed class BusinessService(
         var business = await dbContext.Businesses.SingleOrDefaultAsync(item => item.Id == businessId, cancellationToken);
         if (business is null)
         {
-            return ApiResponse<BusinessSummaryDto>.Failure("Business not found.");
+            throw new InvalidOperationException("Business not found.");
         }
 
         if (role == UserRole.BusinessOwner && business.OwnerId != userId)
         {
-            return ApiResponse<BusinessSummaryDto>.Failure("You cannot modify this business.");
+            throw new InvalidOperationException("You cannot modify this business.");
         }
 
         var slug = request.Slug.Trim().ToLowerInvariant();
         var slugTaken = await dbContext.Businesses.AnyAsync(item => item.Id != businessId && item.Slug == slug, cancellationToken);
         if (slugTaken)
         {
-            return ApiResponse<BusinessSummaryDto>.Failure("A business with this slug already exists.");
+            throw new InvalidOperationException("A business with this slug already exists.");
         }
 
         business.Name = request.Name.Trim();
@@ -98,7 +98,7 @@ public sealed class BusinessService(
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return ApiResponse<BusinessSummaryDto>.Success(ToSummary(business), "Business updated.");
+        return ToSummary(business);
     }
 
     private static BusinessSummaryDto ToSummary(Business business) =>

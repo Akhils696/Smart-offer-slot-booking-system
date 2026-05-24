@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using SmartOfferBookingSystem.Common;
 using SmartOfferBookingSystem.Data.Context;
@@ -11,7 +12,7 @@ public sealed class AuthService(
     IJwtTokenService jwtTokenService,
     IPasswordService passwordService)
 {
-    public async Task<ApiResponse<LoginResponseDto>> LoginAsync(LoginRequestDto request, CancellationToken cancellationToken)
+    public async Task<LoginResponseDto> LoginAsync(LoginRequestDto request, CancellationToken cancellationToken)
     {
         var normalizedEmail = request.Email.Trim().ToLowerInvariant();
 
@@ -21,16 +22,14 @@ public sealed class AuthService(
 
         if (user is null || !passwordService.VerifyPassword(user, user.PasswordHash, request.Password))
         {
-            return ApiResponse<LoginResponseDto>.Failure("Invalid email or password.");
+            throw new BadHttpRequestException("Invalid email or password.", StatusCodes.Status401Unauthorized);
         }
 
         var (token, expiresAt) = jwtTokenService.CreateToken(user);
 
-        var response = new LoginResponseDto(
+        return new LoginResponseDto(
             token,
             expiresAt,
             new AuthUserDto(user.Id, user.FullName, user.Email, user.Role.ToString()));
-
-        return ApiResponse<LoginResponseDto>.Success(response);
     }
 }
