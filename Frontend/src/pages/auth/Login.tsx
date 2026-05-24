@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, Link } from 'react-router-dom'
 import { Button } from '../../components/ui/Button'
 import { ROUTES } from '../../constants/routes'
 import { useAuth } from '../../hooks/useAuth'
@@ -20,7 +20,7 @@ export function Login() {
   const navigate = useNavigate()
   const location = useLocation()
   const { isAuthenticated, isReady, login } = useAuth()
-  const { register, handleSubmit, formState } = useForm<LoginForm>({
+  const { register, handleSubmit, formState, setValue } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
   })
 
@@ -87,8 +87,26 @@ export function Login() {
           </Button>
         </form>
 
-        <div className="mt-6 rounded-md border border-border bg-surface px-4 py-3 text-sm text-muted">
-          Demo admin: <span className="font-medium text-ink">admin@smartoffer.local</span>
+        <div className="mt-6 text-center text-sm text-muted">
+          Don't have an account?{' '}
+          <Link to={ROUTES.auth.register} className="font-semibold text-primary-600 hover:text-primary-700">
+            Sign up
+          </Link>
+        </div>
+
+        <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-2">
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Demo Testing Accounts</p>
+          <button
+            type="button"
+            onClick={() => {
+              setValue('email', 'admin@smartoffer.local')
+              setValue('password', 'Admin@12345')
+            }}
+            className="flex w-full items-center justify-between rounded border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 transition hover:bg-slate-50"
+          >
+            <span>Platform Admin</span>
+            <span className="font-semibold text-primary-600">Quick Fill</span>
+          </button>
         </div>
       </section>
     </main>

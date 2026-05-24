@@ -18,4 +18,14 @@ public sealed class AuthController(AuthService authService) : ControllerBase
         var response = await authService.LoginAsync(request, cancellationToken);
         return Ok(ApiResponse<LoginResponseDto>.Success(response));
     }
+
+    [HttpPost("register")]
+    [ProducesResponseType(typeof(ApiResponse<LoginResponseDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<LoginResponseDto>>> Register(
+        [FromBody] RegisterRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        var response = await authService.RegisterAsync(request, cancellationToken);
+        return Ok(ApiResponse<LoginResponseDto>.Success(response, "User account registered successfully."));
+    }
 }

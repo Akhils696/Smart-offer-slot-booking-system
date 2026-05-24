@@ -12,7 +12,7 @@ namespace SmartOfferBookingSystem.Controllers;
 public sealed class BookingsController(BookingService bookingService) : ControllerBase
 {
     [HttpGet]
-    [Authorize(Roles = "Admin,BusinessOwner")]
+    [Authorize(Roles = "Admin,BusinessOwner,Customer")]
     [ProducesResponseType(typeof(ApiResponse<IReadOnlyCollection<BookingSummaryDto>>), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse<IReadOnlyCollection<BookingSummaryDto>>>> List(CancellationToken cancellationToken)
     {
@@ -49,7 +49,7 @@ public sealed class BookingsController(BookingService bookingService) : Controll
     }
 
     [HttpPut("{bookingId:guid}/status")]
-    [Authorize(Roles = "Admin,BusinessOwner")]
+    [Authorize(Roles = "Admin,BusinessOwner,Customer")]
     [ProducesResponseType(typeof(ApiResponse<BookingSummaryDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse<BookingSummaryDto>>> UpdateStatus(
         Guid bookingId,

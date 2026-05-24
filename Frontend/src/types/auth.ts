@@ -17,3 +17,10 @@ export interface LoginResponse {
   expiresAt: string
   user: AuthUser
 }
+
+export interface RegisterRequest {
+  fullName: string
+  email: string
+  password: string
+  role: 'Customer' | 'BusinessOwner'
+}

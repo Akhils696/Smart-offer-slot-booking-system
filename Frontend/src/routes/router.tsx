@@ -12,6 +12,7 @@ const Businesses = lazy(() => import('../pages/admin/Businesses').then(m => ({ d
 const Offers = lazy(() => import('../pages/admin/Offers').then(m => ({ default: m.Offers })))
 const Bookings = lazy(() => import('../pages/admin/Bookings').then(m => ({ default: m.Bookings })))
 const Login = lazy(() => import('../pages/auth/Login').then(m => ({ default: m.Login })))
+const Register = lazy(() => import('../pages/auth/Register').then(m => ({ default: m.Register })))
 const Home = lazy(() => import('../pages/public/Home').then(m => ({ default: m.Home })))
 const OfferDetails = lazy(() => import('../pages/public/OfferDetails').then(m => ({ default: m.OfferDetails })))
 const BookingConfirmation = lazy(() => import('../pages/public/BookingConfirmation').then(m => ({ default: m.BookingConfirmation })))
@@ -29,6 +30,7 @@ export const router = createBrowserRouter([
         ],
       },
       { path: ROUTES.auth.login, element: <Suspense fallback={<PageSkeleton />}><Login /></Suspense> },
+      { path: ROUTES.auth.register, element: <Suspense fallback={<PageSkeleton />}><Register /></Suspense> },
       {
         element: <ProtectedRoute />,
         children: [

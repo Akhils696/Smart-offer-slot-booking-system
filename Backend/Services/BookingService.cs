@@ -27,6 +27,10 @@ public sealed class BookingService(
         {
             query = query.Where(b => b.OfferSlot.Offer.Business.OwnerId == userId);
         }
+        else if (role == UserRole.Customer)
+        {
+            query = query.Where(b => b.UserId == userId);
+        }
 
         var items = await query
             .OrderByDescending(b => b.CreatedAt)
@@ -197,6 +201,16 @@ public sealed class BookingService(
             if (role == UserRole.BusinessOwner && booking.OfferSlot.Offer.Business.OwnerId != userId)
             {
                 throw new InvalidOperationException("You do not have permission to modify this booking.");
+            }
+
+            if (role == UserRole.Customer && booking.UserId != userId)
+            {
+                throw new InvalidOperationException("You do not have permission to modify this booking.");
+            }
+
+            if (role == UserRole.Customer && parsedStatus != BookingStatus.Cancelled)
+            {
+                throw new InvalidOperationException("Customers are only permitted to cancel their bookings.");
             }
 
             var oldStatus = booking.Status;

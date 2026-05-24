@@ -4,6 +4,7 @@ using SmartOfferBookingSystem.Data.Context;
 using SmartOfferBookingSystem.DTOs.Auth;
 using SmartOfferBookingSystem.Exceptions;
 using SmartOfferBookingSystem.Interfaces;
+using SmartOfferBookingSystem.Models;
 
 namespace SmartOfferBookingSystem.Services;
 
@@ -52,5 +53,43 @@ public sealed class AuthService(
             token,
             expiresAt,
             new AuthUserDto(user!.Id, user.FullName, user.Email, user.Role.ToString()));
+    }
+
+    public async Task<LoginResponseDto> RegisterAsync(RegisterRequestDto request, CancellationToken cancellationToken)
+    {
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+
+        if (await dbContext.Users.AnyAsync(item => item.Email == normalizedEmail, cancellationToken))
+        {
+            throw new InvalidOperationException("Email address is already in use.");
+        }
+
+        if (!Enum.TryParse<UserRole>(request.Role, true, out var parsedRole) || parsedRole == UserRole.Admin)
+        {
+            throw new InvalidOperationException("Invalid role selected.");
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            FullName = request.FullName.Trim(),
+            Email = normalizedEmail,
+            Role = parsedRole,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
+        user.PasswordHash = passwordService.HashPassword(user, request.Password);
+
+        dbContext.Users.Add(user);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        var (token, expiresAt) = jwtTokenService.CreateToken(user);
+
+        return new LoginResponseDto(
+            token,
+            expiresAt,
+            new AuthUserDto(user.Id, user.FullName, user.Email, user.Role.ToString()));
     }
 }

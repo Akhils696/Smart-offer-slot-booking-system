@@ -1,13 +1,14 @@
 import { createContext, useEffect, useState, type ReactNode } from 'react'
-import type { AuthUser, LoginRequest } from '../types/auth'
+import type { AuthUser, LoginRequest, RegisterRequest } from '../types/auth'
 import { clearSession, getStoredUser, setSession } from '../services/auth-storage'
-import { login as loginRequest } from '../services/auth-service'
+import { login as loginRequest, register as registerRequest } from '../services/auth-service'
 
 interface AuthContextValue {
   user: AuthUser | null
   isAuthenticated: boolean
   isReady: boolean
   login: (payload: LoginRequest) => Promise<void>
+  register: (payload: RegisterRequest) => Promise<void>
   logout: () => void
 }
 
@@ -32,6 +33,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUser(response.user)
   }
 
+  async function register(payload: RegisterRequest) {
+    const response = await registerRequest(payload)
+    setSession(response.accessToken, response.user)
+    setUser(response.user)
+  }
+
   function logout() {
     clearSession()
     setUser(null)
@@ -44,6 +51,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         isAuthenticated: Boolean(user),
         isReady,
         login,
+        register,
         logout,
       }}
     >
