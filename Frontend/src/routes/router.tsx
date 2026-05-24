@@ -1,16 +1,19 @@
 import { Navigate, createBrowserRouter } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
 import { AdminLayout } from '../layouts/AdminLayout'
 import { AppLayout } from '../layouts/AppLayout'
 import { PublicLayout } from '../layouts/PublicLayout'
-import { Bookings } from '../pages/admin/Bookings'
-import { Businesses } from '../pages/admin/Businesses'
-import { Dashboard } from '../pages/admin/Dashboard'
-import { Offers } from '../pages/admin/Offers'
-import { Login } from '../pages/auth/Login'
-import { Home } from '../pages/public/Home'
-import { OfferDetails } from '../pages/public/OfferDetails'
 import { ROUTES } from '../constants/routes'
 import { ProtectedRoute } from './ProtectedRoute'
+import { PageSkeleton } from '../components/common/PageSkeleton'
+
+const Dashboard = lazy(() => import('../pages/admin/Dashboard').then(m => ({ default: m.Dashboard })))
+const Businesses = lazy(() => import('../pages/admin/Businesses').then(m => ({ default: m.Businesses })))
+const Offers = lazy(() => import('../pages/admin/Offers').then(m => ({ default: m.Offers })))
+const Bookings = lazy(() => import('../pages/admin/Bookings').then(m => ({ default: m.Bookings })))
+const Login = lazy(() => import('../pages/auth/Login').then(m => ({ default: m.Login })))
+const Home = lazy(() => import('../pages/public/Home').then(m => ({ default: m.Home })))
+const OfferDetails = lazy(() => import('../pages/public/OfferDetails').then(m => ({ default: m.OfferDetails })))
 
 export const router = createBrowserRouter([
   {
@@ -19,11 +22,11 @@ export const router = createBrowserRouter([
       {
         element: <PublicLayout />,
         children: [
-          { path: ROUTES.public.home, element: <Home /> },
-          { path: ROUTES.public.offerDetails, element: <OfferDetails /> },
+          { path: ROUTES.public.home, element: <Suspense fallback={<PageSkeleton />}><Home /></Suspense> },
+          { path: ROUTES.public.offerDetails, element: <Suspense fallback={<PageSkeleton />}><OfferDetails /></Suspense> },
         ],
       },
-      { path: ROUTES.auth.login, element: <Login /> },
+      { path: ROUTES.auth.login, element: <Suspense fallback={<PageSkeleton />}><Login /></Suspense> },
       {
         element: <ProtectedRoute />,
         children: [
@@ -32,10 +35,10 @@ export const router = createBrowserRouter([
             element: <AdminLayout />,
             children: [
               { index: true, element: <Navigate to={ROUTES.admin.dashboard} replace /> },
-              { path: ROUTES.admin.dashboard, element: <Dashboard /> },
-              { path: ROUTES.admin.businesses, element: <Businesses /> },
-              { path: ROUTES.admin.offers, element: <Offers /> },
-              { path: ROUTES.admin.bookings, element: <Bookings /> },
+              { path: ROUTES.admin.dashboard, element: <Suspense fallback={<PageSkeleton />}><Dashboard /></Suspense> },
+              { path: ROUTES.admin.businesses, element: <Suspense fallback={<PageSkeleton />}><Businesses /></Suspense> },
+              { path: ROUTES.admin.offers, element: <Suspense fallback={<PageSkeleton />}><Offers /></Suspense> },
+              { path: ROUTES.admin.bookings, element: <Suspense fallback={<PageSkeleton />}><Bookings /></Suspense> },
             ],
           },
         ],
