@@ -1,31 +1,15 @@
-import { createContext, useEffect, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import type { AuthUser, LoginRequest, RegisterRequest } from '../types/auth'
 import { clearSession, getStoredUser, setSession } from '../services/auth-storage'
 import { login as loginRequest, register as registerRequest } from '../services/auth-service'
-
-interface AuthContextValue {
-  user: AuthUser | null
-  isAuthenticated: boolean
-  isReady: boolean
-  login: (payload: LoginRequest) => Promise<void>
-  register: (payload: RegisterRequest) => Promise<void>
-  logout: () => void
-}
-
-export const AuthContext = createContext<AuthContextValue | undefined>(undefined)
+import { AuthContext } from './auth-context'
 
 interface AuthProviderProps {
   children: ReactNode
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<AuthUser | null>(null)
-  const [isReady, setIsReady] = useState(false)
-
-  useEffect(() => {
-    setUser(getStoredUser())
-    setIsReady(true)
-  }, [])
+  const [user, setUser] = useState<AuthUser | null>(() => getStoredUser())
 
   async function login(payload: LoginRequest) {
     const response = await loginRequest(payload)
@@ -49,7 +33,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       value={{
         user,
         isAuthenticated: Boolean(user),
-        isReady,
+        isReady: true,
         login,
         register,
         logout,

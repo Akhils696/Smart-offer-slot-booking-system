@@ -1,4 +1,4 @@
-import { CalendarCheck, LogIn, LogOut, User, Clock, X, AlertCircle, RefreshCw, LayoutDashboard, Ticket } from 'lucide-react'
+import { AlertCircle, CalendarCheck, Clock, LayoutDashboard, LogIn, LogOut, RefreshCw, Ticket, User, X } from 'lucide-react'
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -57,21 +57,19 @@ export function PublicLayout() {
   const userBookings = bookingsQuery.data ?? []
 
   return (
-    <div className="min-h-screen bg-slate-50/50 flex flex-col">
-      {/* Sticky Header with Backdrop Blur */}
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur-md">
+    <div className="flex min-h-screen flex-col bg-canvas">
+      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/85 shadow-sm backdrop-blur-md">
         <Container className="flex h-16 items-center justify-between">
           <NavLink to={ROUTES.public.home} className="flex items-center gap-2 font-bold text-slate-900 transition hover:opacity-90">
             <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-600 text-white shadow-soft">
               <CalendarCheck size={18} />
             </span>
-            <span className="tracking-tight text-lg">Smart Offer</span>
+            <span className="text-lg tracking-tight">Smart Offer</span>
           </NavLink>
 
           <nav className="flex items-center gap-4">
             {isAuthenticated && user ? (
               <div className="relative">
-                {/* Account Trigger */}
                 <button
                   type="button"
                   onClick={() => setIsDropdownOpen((prev) => !prev)}
@@ -83,14 +81,13 @@ export function PublicLayout() {
                   <span className="max-w-[120px] truncate">{user.fullName}</span>
                 </button>
 
-                {/* Dropdown Menu */}
-                {isDropdownOpen && (
+                {isDropdownOpen ? (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setIsDropdownOpen(false)} />
-                    <div className="absolute right-0 mt-2 z-20 w-56 origin-top-right rounded-lg border border-slate-200 bg-white p-1.5 shadow-lg ring-1 ring-black/5 focus:outline-none">
-                      <div className="px-3 py-2 border-b border-slate-100 mb-1">
-                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Role: {user.role}</p>
-                        <p className="text-sm font-semibold text-slate-800 truncate">{user.email}</p>
+                    <div className="absolute right-0 z-20 mt-2 w-56 origin-top-right animate-fade-up rounded-lg border border-slate-200 bg-white p-1.5 shadow-lift ring-1 ring-black/5 focus:outline-none">
+                      <div className="mb-1 border-b border-slate-100 px-3 py-2">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Role: {user.role}</p>
+                        <p className="truncate text-sm font-semibold text-slate-800">{user.email}</p>
                       </div>
 
                       {user.role === 'Customer' ? (
@@ -128,14 +125,11 @@ export function PublicLayout() {
                       </button>
                     </div>
                   </>
-                )}
+                ) : null}
               </div>
             ) : (
               <div className="flex items-center gap-3">
-                <Link
-                  to={ROUTES.auth.register}
-                  className="text-sm font-semibold text-slate-600 hover:text-slate-900 px-3 py-2 transition"
-                >
+                <Link to={ROUTES.auth.register} className="px-3 py-2 text-sm font-semibold text-slate-600 transition hover:text-slate-900">
                   Sign up
                 </Link>
                 <Link
@@ -151,36 +145,28 @@ export function PublicLayout() {
         </Container>
       </header>
 
-      {/* Main Content Area */}
       <main className="flex-grow">
         <Outlet />
       </main>
 
-      {/* Footer */}
       <footer className="border-t border-slate-200 bg-white py-6">
         <Container className="text-center text-xs text-slate-400">
-          <p>© {new Date().getFullYear()} Smart Offer Booking System. Built with enterprise-grade optimistic concurrency.</p>
+          <p>&copy; {new Date().getFullYear()} Smart Offer Booking System. Built for reliable slot reservations.</p>
         </Container>
       </footer>
 
-      {/* Slide-over Customer Reservations Panel */}
-      {isDrawerOpen && (
+      {isDrawerOpen ? (
         <div className="fixed inset-0 z-50 overflow-hidden">
-          {/* Backdrop blur */}
-          <div
-            className="absolute inset-0 bg-slate-900/30 backdrop-blur-sm transition-opacity"
-            onClick={() => setIsDrawerOpen(false)}
-          />
+          <div className="absolute inset-0 bg-slate-900/30 backdrop-blur-sm transition-opacity" onClick={() => setIsDrawerOpen(false)} />
 
           <div className="absolute inset-y-0 right-0 flex max-w-full pl-10">
             <div
               ref={dialogRef}
-              className="w-screen max-w-md transform bg-white shadow-xl transition-all duration-300 ease-in-out flex flex-col h-full border-l border-slate-200"
+              className="flex h-full w-screen max-w-md animate-slide-in flex-col border-l border-slate-200 bg-white shadow-lift"
               role="dialog"
               aria-modal="true"
             >
-              {/* Drawer Header */}
-              <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4.5 bg-slate-50/50">
+              <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-6 py-4.5">
                 <div>
                   <h3 className="text-base font-bold text-slate-900">My Reservations</h3>
                   <p className="text-xs text-slate-400">Track and manage your upcoming offer slots.</p>
@@ -194,33 +180,27 @@ export function PublicLayout() {
                 </button>
               </div>
 
-              {/* Drawer Bookings List */}
-              <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+              <div className="flex-1 space-y-4 overflow-y-auto px-6 py-5">
                 {bookingsQuery.isLoading ? (
-                  <div className="flex flex-col items-center justify-center py-16 gap-3 text-slate-400">
+                  <div className="flex flex-col items-center justify-center gap-3 py-16 text-slate-400">
                     <RefreshCw size={24} className="animate-spin text-primary-500" />
                     <span className="text-xs">Syncing your reservations...</span>
                   </div>
                 ) : bookingsQuery.isError ? (
-                  <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-xs text-red-800 flex items-start gap-2">
-                    <AlertCircle size={16} className="shrink-0 text-red-600 mt-0.5" />
+                  <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-4 text-xs text-red-800">
+                    <AlertCircle size={16} className="mt-0.5 shrink-0 text-red-600" />
                     <span>Failed to retrieve your reservations. Please try again.</span>
                   </div>
                 ) : userBookings.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-20 text-center">
-                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-50 text-slate-400 border border-dashed border-slate-200">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-dashed border-slate-200 bg-slate-50 text-slate-400">
                       <Ticket size={20} />
                     </div>
                     <h4 className="mt-4 text-sm font-semibold text-slate-800">No active bookings found</h4>
-                    <p className="mt-1 text-xs text-slate-400 max-w-[240px]">
-                      Discover active, limited-time offers on the home page and book a slot to get started!
+                    <p className="mt-1 max-w-[240px] text-xs text-slate-400">
+                      Discover active, limited-time offers on the home page and book a slot to get started.
                     </p>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      className="mt-6 text-xs"
-                      onClick={() => setIsDrawerOpen(false)}
-                    >
+                    <Button type="button" variant="secondary" className="mt-6 text-xs" onClick={() => setIsDrawerOpen(false)}>
                       Browse Offers
                     </Button>
                   </div>
@@ -230,56 +210,46 @@ export function PublicLayout() {
                     const isConfirmed = booking.status === 'Confirmed'
 
                     return (
-                      <div
-                        key={booking.id}
-                        className="rounded-lg border border-slate-200 bg-white p-4.5 shadow-sm space-y-3.5 hover:border-slate-300 transition"
-                      >
+                      <div key={booking.id} className="motion-card space-y-3.5 rounded-lg border border-slate-200 bg-white p-4.5 shadow-sm hover:border-slate-300">
                         <div className="flex items-start justify-between gap-3">
                           <div className="space-y-0.5">
-                            <span className="text-[10px] font-bold text-primary-700 uppercase tracking-wider">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-primary-700">
                               {booking.businessName}
                             </span>
-                            <h4 className="text-sm font-bold text-slate-800 leading-tight">
-                              {booking.offerTitle}
-                            </h4>
+                            <h4 className="text-sm font-bold leading-tight text-slate-800">{booking.offerTitle}</h4>
                           </div>
                           <Badge
                             tone={
                               booking.status === 'Confirmed'
                                 ? 'success'
                                 : booking.status === 'Completed'
-                                ? 'muted'
-                                : booking.status === 'Cancelled'
-                                ? 'warning'
-                                : 'muted'
+                                  ? 'muted'
+                                  : booking.status === 'Cancelled'
+                                    ? 'warning'
+                                    : 'muted'
                             }
                           >
                             {booking.status}
                           </Badge>
                         </div>
 
-                        <div className="rounded bg-slate-50 p-2.5 space-y-1.5 text-xs text-slate-500 border border-slate-100">
+                        <div className="space-y-1.5 rounded border border-slate-100 bg-slate-50 p-2.5 text-xs text-slate-500">
                           <p className="flex items-center gap-1.5">
                             <Clock size={12} className="text-slate-400" />
-                            <span className="font-medium text-slate-700">
-                              {formatDateTime(booking.slotStartsAt)}
-                            </span>
+                            <span className="font-medium text-slate-700">{formatDateTime(booking.slotStartsAt)}</span>
                           </p>
                           <p>
                             Guests: <span className="font-semibold text-slate-700">{booking.peopleCount} people</span>
                           </p>
-                          <p className="font-mono text-[10px] text-slate-400">
-                            Ref: {booking.referenceCode}
-                          </p>
+                          <p className="font-mono text-[10px] text-slate-400">Ref: {booking.referenceCode}</p>
                         </div>
 
-                        {/* Cancellations */}
-                        {isConfirmed && isUpcoming && (
+                        {isConfirmed && isUpcoming ? (
                           <div className="flex justify-end border-t border-slate-100 pt-3">
                             <Button
                               type="button"
                               variant="ghost"
-                              className="h-8 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 px-3 font-semibold"
+                              className="h-8 px-3 text-xs font-semibold text-red-600 hover:bg-red-50 hover:text-red-700"
                               disabled={cancelMutation.isPending}
                               onClick={() => {
                                 if (confirm('Are you sure you want to cancel this reservation slot?')) {
@@ -290,7 +260,7 @@ export function PublicLayout() {
                               {cancelMutation.isPending ? 'Cancelling...' : 'Cancel Booking'}
                             </Button>
                           </div>
-                        )}
+                        ) : null}
                       </div>
                     )
                   })
@@ -299,7 +269,7 @@ export function PublicLayout() {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   )
 }

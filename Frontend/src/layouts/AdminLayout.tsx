@@ -19,8 +19,7 @@ export function AdminLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-surface">
-      {/* Mobile menu backdrop */}
+    <div className="min-h-screen bg-canvas">
       {isMobileMenuOpen && (
         <div
           className="fixed inset-0 z-30 bg-ink/20 backdrop-blur-sm lg:hidden"
@@ -28,10 +27,9 @@ export function AdminLayout() {
         />
       )}
 
-      {/* Mobile sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 w-64 border-r border-border bg-white transition-transform duration-200 ease-in-out lg:hidden",
+          "fixed inset-y-0 left-0 z-40 w-64 border-r border-border bg-white shadow-lift transition-transform duration-200 ease-in-out lg:hidden",
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -70,8 +68,7 @@ export function AdminLayout() {
         </nav>
       </aside>
 
-      {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-border bg-white lg:block">
+      <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-border bg-white shadow-sm lg:block">
         <div className="flex h-16 items-center gap-2 border-b border-border px-6 font-semibold">
           <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary-600 text-white">
             <CalendarDays size={18} />
@@ -86,7 +83,7 @@ export function AdminLayout() {
               className={({ isActive }) =>
                 cn(
                   'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted transition hover:bg-surface hover:text-ink',
-                  isActive && 'bg-primary-50 text-primary-700',
+                  isActive && 'bg-primary-50 text-primary-700 shadow-sm',
                 )
               }
             >
@@ -98,7 +95,7 @@ export function AdminLayout() {
       </aside>
 
       <div className="lg:pl-64">
-        <header className="sticky top-0 z-20 border-b border-border bg-white/95 backdrop-blur">
+        <header className="sticky top-0 z-20 border-b border-border bg-white/90 shadow-sm backdrop-blur">
           <Container className="flex h-16 items-center justify-between lg:max-w-none">
             <div className="flex items-center gap-3">
               <button
@@ -108,13 +105,13 @@ export function AdminLayout() {
               >
                 <Menu size={18} />
               </button>
-              <div>
+              <div className="animate-slide-in">
                 <p className="text-xs font-medium uppercase text-muted">Admin workspace</p>
                 <p className="text-sm font-semibold text-ink">Offer operations</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="hidden rounded-md border border-border bg-white px-3 py-2 text-sm text-muted sm:block">
+              <div className="hidden rounded-md border border-border bg-surface px-3 py-2 text-sm text-muted sm:block">
                 {user?.fullName ?? 'Admin'}
               </div>
               <Button type="button" variant="secondary" onClick={logout}>

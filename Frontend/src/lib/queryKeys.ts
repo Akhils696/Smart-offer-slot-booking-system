@@ -7,7 +7,7 @@ export const queryKeys = {
     detail: (id: string) => ['businesses', id] as const,
   },
   offers: {
-    list: (filters: Record<string, any>) => ['offers', filters] as const,
+    list: (filters: Record<string, unknown>) => ['offers', filters] as const,
     detail: (id: string) => ['offers', id] as const,
   },
   slots: {

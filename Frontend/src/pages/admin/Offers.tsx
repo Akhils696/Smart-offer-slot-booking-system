@@ -638,8 +638,8 @@ function SlotManagementPanel({ offer }: SlotManagementPanelProps) {
       void queryClient.invalidateQueries({ queryKey: ['slots', offer.id] })
       resetForm()
     },
-    onError: (error: any) => {
-      setErrorMsg(error?.message || getApiErrorMessage(error, 'Unable to save slot.'))
+    onError: (error: unknown) => {
+      setErrorMsg(getApiErrorMessage(error, 'Unable to save slot.'))
     },
   })
 
@@ -854,4 +854,3 @@ function SlotManagementPanel({ offer }: SlotManagementPanelProps) {
     </div>
   )
 }
-

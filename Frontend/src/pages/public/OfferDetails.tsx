@@ -1,4 +1,5 @@
-import { AlertCircle, Sparkles, Users } from 'lucide-react'
+import axios from 'axios'
+import { AlertCircle, CheckCircle2, Sparkles, Users, X } from 'lucide-react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
@@ -16,8 +17,7 @@ import { formatCurrency, formatDateTime } from '../../utils/format'
 import { getApiErrorMessage } from '../../utils/http'
 import { useDialogA11y } from '../../hooks/useDialogA11y'
 import { PageSkeleton } from '../../components/common/PageSkeleton'
-
-
+import type { SlotSummary } from '../../types/slot'
 
 export function OfferDetails() {
   const { offerId } = useParams<{ offerId: string }>()
@@ -61,24 +61,27 @@ export function OfferDetails() {
 
   const offer = offerQuery.data
   const slots = slotsQuery.data ?? []
-
-  const activeSlot = slots.find((s) => s.id === selectedSlot)
+  const activeSlot = slots.find((slot) => slot.id === selectedSlot)
 
   return (
     <Container className="py-12">
       <div className="grid gap-8 lg:grid-cols-3">
-        {/* Main Details Panel */}
-        <article className="space-y-6 lg:col-span-2">
-          <header className="space-y-2">
+        <article className="animate-fade-up space-y-6 lg:col-span-2">
+          <header className="rounded-2xl border border-border bg-white p-6 shadow-sm">
             <span className="text-xs font-semibold uppercase tracking-wider text-primary-700">
               {offer.businessName}
             </span>
-            <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">{offer.title}</h1>
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-ink sm:text-4xl">{offer.title}</h1>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Badge>{offer.category}</Badge>
+              <Badge tone={offer.status === 'Active' ? 'success' : 'warning'}>{offer.status}</Badge>
+              <Badge tone="muted">{offer.discountPercentage}% off</Badge>
+            </div>
           </header>
 
-          <section className="rounded-lg border border-border bg-white p-6 shadow-soft space-y-4">
+          <section className="space-y-4 rounded-xl border border-border bg-white p-6 shadow-soft">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">Offer description</h2>
-            <p className="text-sm leading-relaxed text-ink/90 whitespace-pre-wrap">
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink/90">
               {offer.description ?? 'No detailed description provided for this offer.'}
             </p>
           </section>
@@ -95,8 +98,7 @@ export function OfferDetails() {
           </section>
         </article>
 
-        {/* Sticky Checkout Reservation Card */}
-        <aside className="h-fit rounded-lg border border-border bg-white p-6 shadow-soft space-y-6 lg:sticky lg:top-24">
+        <aside className="h-fit animate-fade-up space-y-6 rounded-xl border border-border bg-white p-6 shadow-soft lg:sticky lg:top-24">
           <div className="flex items-baseline justify-between border-b border-border pb-4">
             <span className="text-xs font-semibold uppercase tracking-wider text-muted">Special Offer</span>
             <div className="flex flex-col items-end">
@@ -106,14 +108,14 @@ export function OfferDetails() {
           </div>
 
           <div className="space-y-4">
-            <div className="rounded-md bg-surface p-3 text-xs text-muted flex items-start gap-2.5">
+            <div className="flex items-start gap-2.5 rounded-md bg-surface p-3 text-xs text-muted">
               <Sparkles className="shrink-0 text-primary-600" size={15} />
-              <span>Book instantly. No booking fees. Concurrency-safe seat reservations mapped live.</span>
+              <span>Book instantly. Seat availability is checked again before the reservation is confirmed.</span>
             </div>
 
             {offer.status !== 'Active' ? (
-              <div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 space-y-1">
-                <p className="font-semibold flex items-center gap-2">
+              <div className="space-y-1 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                <p className="flex items-center gap-2 font-semibold">
                   <AlertCircle size={16} />
                   Offer is currently paused
                 </p>
@@ -129,42 +131,40 @@ export function OfferDetails() {
                 {activeSlot?.status === 'Full'
                   ? 'Slot Fully Booked'
                   : activeSlot?.status === 'Expired'
-                  ? 'Slot Expired'
-                  : selectedSlot
-                  ? 'Reserve Slot'
-                  : 'Select a Slot to Reserve'}
+                    ? 'Slot Expired'
+                    : selectedSlot
+                      ? 'Reserve Slot'
+                      : 'Select a Slot to Reserve'}
               </Button>
             )}
 
-            {selectedSlot && activeSlot && (
-              <div className="text-center">
-                <p className="text-xs text-muted">
-                  Selected: <span className="font-medium text-ink">{formatDateTime(activeSlot.startsAt)}</span>
+            {selectedSlot && activeSlot ? (
+              <div className="rounded-md border border-primary-100 bg-primary-50 p-3">
+                <p className="flex items-center gap-2 text-xs font-medium text-primary-800">
+                  <CheckCircle2 size={14} />
+                  Selected: {formatDateTime(activeSlot.startsAt)}
                 </p>
               </div>
-            )}
+            ) : null}
           </div>
         </aside>
       </div>
 
-      {isModalOpen && offerId && selectedSlot && (
+      {isModalOpen && offerId && selectedSlot && activeSlot ? (
         <BookingModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           offerId={offerId}
           slotId={selectedSlot}
-          slot={activeSlot!}
+          slot={activeSlot}
         />
-      )}
+      ) : null}
     </Container>
   )
 }
 
-/* ==========================================
-   SUB-COMPONENT: SlotList
-   ========================================== */
 interface SlotListProps {
-  slots: any[]
+  slots: SlotSummary[]
   isLoading: boolean
   isError: boolean
   selectedSlot: string | null
@@ -175,8 +175,8 @@ function SlotList({ slots, isLoading, isError, selectedSlot, onSelect }: SlotLis
   if (isLoading) {
     return (
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="h-16 animate-pulse rounded-lg bg-border/40" />
-        <div className="h-16 animate-pulse rounded-lg bg-border/40" />
+        <div className="skeleton-shimmer h-20 animate-shimmer rounded-lg" />
+        <div className="skeleton-shimmer h-20 animate-shimmer rounded-lg" />
       </div>
     )
   }
@@ -196,22 +196,14 @@ function SlotList({ slots, isLoading, isError, selectedSlot, onSelect }: SlotLis
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       {slots.map((slot) => (
-        <SlotCard
-          key={slot.id}
-          slot={slot}
-          isSelected={selectedSlot === slot.id}
-          onSelect={() => onSelect(slot.id)}
-        />
+        <SlotCard key={slot.id} slot={slot} isSelected={selectedSlot === slot.id} onSelect={() => onSelect(slot.id)} />
       ))}
     </div>
   )
 }
 
-/* ==========================================
-   SUB-COMPONENT: SlotCard
-   ========================================== */
 interface SlotCardProps {
-  slot: any
+  slot: SlotSummary
   isSelected: boolean
   onSelect: () => void
 }
@@ -225,7 +217,7 @@ function SlotCard({ slot, isSelected, onSelect }: SlotCardProps) {
       type="button"
       disabled={isFull || isExpired}
       onClick={onSelect}
-      className={`flex flex-col items-start gap-1 rounded-lg border p-4 text-left transition ${
+      className={`motion-card flex flex-col items-start gap-1 rounded-lg border p-4 text-left transition ${
         isSelected
           ? 'border-primary-600 bg-primary-50/40 ring-1 ring-primary-500'
           : 'border-border bg-white hover:border-slate-400 disabled:opacity-55 disabled:hover:border-border'
@@ -233,50 +225,49 @@ function SlotCard({ slot, isSelected, onSelect }: SlotCardProps) {
     >
       <div className="flex w-full items-center justify-between gap-2">
         <span className="text-sm font-semibold text-ink">{formatDateTime(slot.startsAt)}</span>
-        <Badge
-          tone={slot.status === 'Active' ? 'success' : slot.status === 'Full' ? 'warning' : 'muted'}
-        >
+        <Badge tone={slot.status === 'Active' ? 'success' : slot.status === 'Full' ? 'warning' : 'muted'}>
           {slot.status}
         </Badge>
       </div>
       <div className="mt-1 flex items-center gap-1.5 text-xs text-muted">
         <Users size={13} />
-        <span>
-          {isFull ? 'Fully Booked' : `${slot.availableCount} of ${slot.capacity} seats left`}
-        </span>
+        <span>{isFull ? 'Fully Booked' : `${slot.availableCount} of ${slot.capacity} seats left`}</span>
       </div>
     </button>
   )
 }
 
-/* ==========================================
-   SUB-COMPONENT: BookingModal
-   ========================================== */
 interface BookingModalProps {
   isOpen: boolean
   onClose: () => void
   offerId: string
   slotId: string
-  slot: any
+  slot: SlotSummary
 }
 
 function BookingModal({ isOpen, onClose, offerId, slotId, slot }: BookingModalProps) {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const [concurrencyError, setConcurrencyError] = useState<string | null>(null)
-
   const dialogRef = useDialogA11y<HTMLDivElement>({ isOpen, onClose })
 
   const bookingSchema = z.object({
     customerName: z.string().min(2, 'Name is required (at least 2 characters).').max(180),
     customerEmail: z.string().email('Please enter a valid email address.').max(220).optional().or(z.literal('')),
     customerPhone: z.string().min(10, 'Phone number must be at least 10 digits.').max(40),
-    peopleCount: z.coerce.number().int().min(1, 'Must book for at least 1 person.').max(slot.availableCount, `Only ${slot.availableCount} seats left in this slot.`),
+    peopleCount: z.coerce
+      .number()
+      .int()
+      .min(1, 'Must book for at least 1 person.')
+      .max(slot.availableCount, `Only ${slot.availableCount} seats left in this slot.`),
     specialNote: z.string().max(1000).optional(),
   })
 
-  const form = useForm<z.infer<typeof bookingSchema>>({
-    resolver: zodResolver(bookingSchema) as any,
+  type BookingFormInput = z.input<typeof bookingSchema>
+  type BookingForm = z.output<typeof bookingSchema>
+
+  const form = useForm<BookingFormInput, unknown, BookingForm>({
+    resolver: zodResolver(bookingSchema),
     defaultValues: {
       customerName: '',
       customerEmail: '',
@@ -287,7 +278,7 @@ function BookingModal({ isOpen, onClose, offerId, slotId, slot }: BookingModalPr
   })
 
   const bookingMutation = useMutation({
-    mutationFn: async (values: z.infer<typeof bookingSchema>) => {
+    mutationFn: async (values: BookingForm) => {
       return createBooking({
         offerSlotId: slotId,
         customerName: values.customerName,
@@ -308,16 +299,15 @@ function BookingModal({ isOpen, onClose, offerId, slotId, slot }: BookingModalPr
       onClose()
       navigate(`/booking/confirmation/${response.data.id}`)
     },
-    onError: async (error: any) => {
-      // 1. Differentiated Concurrency Lock UX
-      const status = error.response?.status
+    onError: (error: unknown) => {
+      const status = axios.isAxiosError(error) ? error.response?.status : undefined
       if (status === 409) {
-        // Concurrency token collision! Force refetching slots in background to synchronize
         setConcurrencyError('This timeslot was just reserved by another customer. Please select another slot.')
         void queryClient.invalidateQueries({ queryKey: ['slots', offerId] })
-      } else {
-        toast.error(getApiErrorMessage(error, 'Unable to place booking.'))
+        return
       }
+
+      toast.error(getApiErrorMessage(error, 'Unable to place booking.'))
     },
   })
 
@@ -325,7 +315,7 @@ function BookingModal({ isOpen, onClose, offerId, slotId, slot }: BookingModalPr
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-ink/20 px-4 py-6 backdrop-blur-sm">
       <div
         ref={dialogRef}
-        className="w-full max-w-md rounded-lg border border-border bg-white p-6 shadow-soft max-h-[90vh] overflow-y-auto"
+        className="max-h-[90vh] w-full max-w-md animate-fade-up overflow-y-auto rounded-xl border border-border bg-white p-6 shadow-lift"
         role="dialog"
         aria-modal="true"
       >
@@ -334,18 +324,18 @@ function BookingModal({ isOpen, onClose, offerId, slotId, slot }: BookingModalPr
             <h3 className="text-lg font-semibold text-ink">Confirm Reservation</h3>
             <p className="mt-1 text-xs text-muted">Fill contact details to reserve this slot.</p>
           </div>
-          <Button type="button" variant="ghost" onClick={onClose} className="h-8 w-8 p-0">
-            ✕
+          <Button type="button" variant="ghost" onClick={onClose} className="h-8 w-8 p-0" aria-label="Close booking form">
+            <X size={16} />
           </Button>
         </div>
 
         {concurrencyError ? (
           <div className="mt-4 space-y-4">
-            <div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 flex items-start gap-2.5">
-              <AlertCircle className="shrink-0 text-amber-600 mt-0.5" size={17} />
+            <div className="flex items-start gap-2.5 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+              <AlertCircle className="mt-0.5 shrink-0 text-amber-600" size={17} />
               <div>
                 <p className="font-semibold">Booking Collision</p>
-                <p className="text-xs mt-0.5 leading-relaxed">{concurrencyError}</p>
+                <p className="mt-0.5 text-xs leading-relaxed">{concurrencyError}</p>
               </div>
             </div>
             <div className="flex justify-end pt-2">
@@ -356,10 +346,10 @@ function BookingModal({ isOpen, onClose, offerId, slotId, slot }: BookingModalPr
           </div>
         ) : (
           <form className="mt-5 space-y-4" onSubmit={form.handleSubmit((values) => bookingMutation.mutate(values))}>
-            <div className="rounded-md bg-surface p-3 text-xs text-muted border border-border/50">
+            <div className="rounded-md border border-border/50 bg-surface p-3 text-xs text-muted">
               <p className="font-medium text-ink">Selected Schedule:</p>
               <p className="mt-1">{formatDateTime(slot.startsAt)}</p>
-              <p className="mt-0.5 text-2xs text-primary-700 font-semibold">{slot.availableCount} seats remaining</p>
+              <p className="mt-0.5 text-2xs font-semibold text-primary-700">{slot.availableCount} seats remaining</p>
             </div>
 
             <label className="block">
@@ -371,9 +361,7 @@ function BookingModal({ isOpen, onClose, offerId, slotId, slot }: BookingModalPr
                 {...form.register('customerName')}
               />
               {form.formState.errors.customerName ? (
-                <span className="mt-1 block text-xs text-red-600">
-                  {form.formState.errors.customerName.message}
-                </span>
+                <span className="mt-1 block text-xs text-red-600">{form.formState.errors.customerName.message}</span>
               ) : null}
             </label>
 
@@ -386,9 +374,7 @@ function BookingModal({ isOpen, onClose, offerId, slotId, slot }: BookingModalPr
                 {...form.register('customerPhone')}
               />
               {form.formState.errors.customerPhone ? (
-                <span className="mt-1 block text-xs text-red-600">
-                  {form.formState.errors.customerPhone.message}
-                </span>
+                <span className="mt-1 block text-xs text-red-600">{form.formState.errors.customerPhone.message}</span>
               ) : null}
             </label>
 
@@ -402,9 +388,7 @@ function BookingModal({ isOpen, onClose, offerId, slotId, slot }: BookingModalPr
                 {...form.register('customerEmail')}
               />
               {form.formState.errors.customerEmail ? (
-                <span className="mt-1 block text-xs text-red-600">
-                  {form.formState.errors.customerEmail.message}
-                </span>
+                <span className="mt-1 block text-xs text-red-600">{form.formState.errors.customerEmail.message}</span>
               ) : null}
             </label>
 
@@ -419,29 +403,24 @@ function BookingModal({ isOpen, onClose, offerId, slotId, slot }: BookingModalPr
                 {...form.register('peopleCount')}
               />
               {form.formState.errors.peopleCount ? (
-                <span className="mt-1 block text-xs text-red-600">
-                  {form.formState.errors.peopleCount.message}
-                </span>
+                <span className="mt-1 block text-xs text-red-600">{form.formState.errors.peopleCount.message}</span>
               ) : null}
             </label>
 
             <label className="block">
               <span className="text-xs font-semibold uppercase tracking-wider text-muted">Special Note (Optional)</span>
               <textarea
-                className="mt-1.5 w-full rounded-md border border-border bg-white p-3 text-sm text-ink transition placeholder:text-muted/65 hover:border-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 h-20 resize-none"
+                className="mt-1.5 h-20 w-full resize-none rounded-md border border-border bg-white p-3 text-sm text-ink transition placeholder:text-muted/65 hover:border-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
                 placeholder="Any special instructions or preferences..."
                 disabled={bookingMutation.isPending}
                 {...form.register('specialNote')}
               />
               {form.formState.errors.specialNote ? (
-                <span className="mt-1 block text-xs text-red-600">
-                  {form.formState.errors.specialNote.message}
-                </span>
+                <span className="mt-1 block text-xs text-red-600">{form.formState.errors.specialNote.message}</span>
               ) : null}
             </label>
 
-            {/* 2. Submission Locking & Pending states to block double clicks */}
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-border mt-6">
+            <div className="mt-6 flex items-center justify-end gap-3 border-t border-border pt-3">
               <Button type="button" variant="ghost" onClick={onClose} disabled={bookingMutation.isPending}>
                 Cancel
               </Button>

@@ -4,7 +4,7 @@
 
 :root {
   color: #172033;
-  background: #f7f8fa;
+  background: #fbfcfe;
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
@@ -12,6 +12,10 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 * {
@@ -22,6 +26,9 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(247, 248, 250, 0.96)),
+    repeating-linear-gradient(90deg, rgba(217, 222, 231, 0.24) 0 1px, transparent 1px 48px);
 }
 
 a {
@@ -34,6 +41,29 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+::selection {
+  background: rgba(37, 99, 235, 0.18);
+}
+
+:focus-visible {
+  outline: 2px solid rgba(37, 99, 235, 0.65);
+  outline-offset: 2px;
+}
+
+.motion-card {
+  transform: translateY(0);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.motion-card:hover {
+  transform: translateY(-3px);
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #eef1f6 25%, #f8fafc 37%, #eef1f6 63%);
+  background-size: 400% 100%;
 }
 
 @layer base {
