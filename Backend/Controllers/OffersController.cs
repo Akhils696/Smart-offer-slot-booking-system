@@ -23,6 +23,15 @@ public sealed class OffersController(OfferService offerService) : ControllerBase
         return Ok(ApiResponse<PagedResult<OfferSummaryDto>>.Success(offers));
     }
 
+    [HttpGet("{offerId:guid}")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ApiResponse<OfferSummaryDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<OfferSummaryDto>>> Get(Guid offerId, CancellationToken cancellationToken)
+    {
+        var result = await offerService.GetByIdAsync(offerId, cancellationToken);
+        return Ok(ApiResponse<OfferSummaryDto>.Success(result));
+    }
+
     [HttpPost]
     [ProducesResponseType(typeof(ApiResponse<OfferSummaryDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse<OfferSummaryDto>>> Create(

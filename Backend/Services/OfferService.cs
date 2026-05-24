@@ -213,6 +213,20 @@ public sealed class OfferService(
         dbContext.Offers.Remove(offer);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
+    public async Task<OfferSummaryDto> GetByIdAsync(Guid offerId, CancellationToken cancellationToken)
+    {
+        var offer = await dbContext.Offers
+            .AsNoTracking()
+            .Include(item => item.Business)
+            .SingleOrDefaultAsync(item => item.Id == offerId, cancellationToken);
+
+        if (offer is null)
+        {
+            throw new InvalidOperationException("Offer not found.");
+        }
+
+        return ToSummary(offer);
+    }
 
     private static OfferSummaryDto ToSummary(Offer offer) =>
         new(

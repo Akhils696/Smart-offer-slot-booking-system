@@ -32,3 +32,8 @@ export async function deleteOffer(offerId: string) {
   const response = await apiClient.delete<ApiResponse<object>>(`${API_ENDPOINTS.offers}/${offerId}`)
   return response.data
 }
+
+export async function getOfferById(offerId: string) {
+  const response = await apiClient.get<ApiResponse<OfferSummary>>(`${API_ENDPOINTS.offers}/${offerId}`)
+  return response.data.data
+}
