@@ -1,0 +1,14 @@
+# .NET
+Backend/bin/
+Backend/obj/
+
+# Frontend
+Frontend/dist/
+Frontend/.env
+
+# Local tooling
+.vs/
+.idea/
+.vscode/
+*.user
+*.log
