@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { CalendarClock, PauseCircle, PencilLine, Plus, Search, Trash2 } from 'lucide-react'
+import { CalendarClock, PauseCircle, PencilLine, Plus, Search, Trash2, AlertCircle, Users, Clock } from 'lucide-react'
 import { useDeferredValue, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
@@ -16,6 +16,8 @@ import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { useDialogA11y } from '../../hooks/useDialogA11y'
+import { getSlots, createSlot, updateSlot, deleteSlot } from '../../services/slot-service'
+import type { SlotSummary } from '../../types/slot'
 
 const offerSchema = z
   .object({
@@ -60,6 +62,11 @@ export function Offers() {
   const [page, setPage] = useState(1)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editing, setEditing] = useState<OfferSummary | null>(null)
+  const [expandedOfferId, setExpandedOfferId] = useState<string | null>(null)
+
+  const toggleSlots = (offerId: string) => {
+    setExpandedOfferId((curr) => (curr === offerId ? null : offerId))
+  }
 
   const closeForm = () => {
     setEditing(null)
@@ -294,6 +301,15 @@ export function Offers() {
                   <Button
                     type="button"
                     variant="secondary"
+                    onClick={() => toggleSlots(offer.id)}
+                  >
+                    <CalendarClock size={16} />
+                    {expandedOfferId === offer.id ? 'Close Slots' : 'Manage Slots'}
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="secondary"
                     onClick={() => {
                       setEditing(offer)
                       setIsFormOpen(true)
@@ -325,6 +341,12 @@ export function Offers() {
                   </Button>
                 </div>
               </div>
+
+              {expandedOfferId === offer.id && (
+                <div className="mt-4 border-t border-border pt-4 bg-slate-50/50 -mx-5 px-5 -mb-4 pb-4">
+                  <SlotManagementPanel offer={offer} />
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -470,3 +492,296 @@ export function Offers() {
     </div>
   )
 }
+
+/* ==========================================
+   SUB-COMPONENT: SlotManagementPanel
+   ========================================== */
+interface SlotManagementPanelProps {
+  offer: OfferSummary
+}
+
+function SlotManagementPanel({ offer }: SlotManagementPanelProps) {
+  const queryClient = useQueryClient()
+  const [isAdding, setIsAdding] = useState(false)
+  const [editingSlot, setEditingSlot] = useState<SlotSummary | null>(null)
+
+  const [startsAt, setStartsAt] = useState('')
+  const [endsAt, setEndsAt] = useState('')
+  const [capacity, setCapacity] = useState(10)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
+  const slotsQuery = useQuery({
+    queryKey: ['slots', offer.id],
+    queryFn: () => getSlots(offer.id),
+  })
+
+  const resetForm = () => {
+    setStartsAt('')
+    setEndsAt('')
+    setCapacity(10)
+    setErrorMsg(null)
+    setIsAdding(false)
+    setEditingSlot(null)
+  }
+
+  const startEdit = (slot: SlotSummary) => {
+    setEditingSlot(slot)
+    setStartsAt(slot.startsAt.slice(0, 16))
+    setEndsAt(slot.endsAt.slice(0, 16))
+    setCapacity(slot.capacity)
+    setErrorMsg(null)
+    setIsAdding(false)
+  }
+
+  const upsertMutation = useMutation({
+    mutationFn: async () => {
+      setErrorMsg(null)
+      if (!startsAt || !endsAt) {
+        throw new Error('Please select both start and end times.')
+      }
+      if (new Date(startsAt) >= new Date(endsAt)) {
+        throw new Error('Slot end time must be later than start time.')
+      }
+      if (capacity < 1) {
+        throw new Error('Slot capacity must be at least 1.')
+      }
+
+      const payload = {
+        offerId: offer.id,
+        startsAt: new Date(startsAt).toISOString(),
+        endsAt: new Date(endsAt).toISOString(),
+        capacity: Number(capacity),
+      }
+
+      if (editingSlot) {
+        return updateSlot(editingSlot.id, payload)
+      } else {
+        return createSlot(payload)
+      }
+    },
+    onSuccess: (response) => {
+      if (!response.succeeded) {
+        setErrorMsg(response.message ?? 'Failed to save slot.')
+        return
+      }
+      toast.success(editingSlot ? 'Slot updated successfully!' : 'Slot scheduled successfully!')
+      void queryClient.invalidateQueries({ queryKey: ['slots', offer.id] })
+      resetForm()
+    },
+    onError: (error: any) => {
+      setErrorMsg(error?.message || getApiErrorMessage(error, 'Unable to save slot.'))
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: async (slotId: string) => {
+      return deleteSlot(slotId)
+    },
+    onSuccess: (response) => {
+      if (!response.succeeded) {
+        toast.error(response.message ?? 'Unable to delete slot.')
+        return
+      }
+      toast.success('Slot deleted successfully!')
+      void queryClient.invalidateQueries({ queryKey: ['slots', offer.id] })
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Unable to delete slot.'))
+    },
+  })
+
+  const slots = slotsQuery.data ?? []
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
+          <Clock size={14} className="text-muted" />
+          Scheduled Timeslots ({slots.length})
+        </h3>
+        {!isAdding && !editingSlot && (
+          <Button
+            type="button"
+            variant="secondary"
+            className="h-7 px-2.5 text-xs"
+            onClick={() => {
+              setIsAdding(true)
+              setErrorMsg(null)
+              const offerStart = new Date(offer.startsAt)
+              const now = new Date()
+              const seedStart = offerStart > now ? offerStart : now
+              const formatForInput = (d: Date) => {
+                const pad = (n: number) => n.toString().padStart(2, '0')
+                return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+              }
+              setStartsAt(formatForInput(seedStart))
+              const seedEnd = new Date(seedStart.getTime() + 60 * 60 * 1000)
+              setEndsAt(formatForInput(seedEnd))
+            }}
+          >
+            <Plus size={13} className="mr-1" />
+            Add Slot
+          </Button>
+        )}
+      </div>
+
+      {(isAdding || editingSlot) && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            upsertMutation.mutate()
+          }}
+          className="rounded-lg border border-slate-200 bg-white p-4 space-y-3.5 shadow-sm"
+        >
+          <h4 className="text-xs font-semibold text-ink">
+            {editingSlot ? 'Edit Scheduled Slot' : 'Create New Slot'}
+          </h4>
+
+          {errorMsg && (
+            <div className="rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-900 flex items-start gap-2">
+              <AlertCircle size={15} className="shrink-0 mt-0.5 text-red-600" />
+              <span>{errorMsg}</span>
+            </div>
+          )}
+
+          <div className="grid gap-3.5 sm:grid-cols-3">
+            <label className="block">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">Starts At</span>
+              <input
+                type="datetime-local"
+                value={startsAt}
+                onChange={(e) => setStartsAt(e.target.value)}
+                className="mt-1 h-9 w-full rounded-md border border-border bg-white px-2.5 text-xs text-ink transition hover:border-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              />
+            </label>
+
+            <label className="block">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">Ends At</span>
+              <input
+                type="datetime-local"
+                value={endsAt}
+                onChange={(e) => setEndsAt(e.target.value)}
+                className="mt-1 h-9 w-full rounded-md border border-border bg-white px-2.5 text-xs text-ink transition hover:border-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              />
+            </label>
+
+            <label className="block">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">Capacity (Seats)</span>
+              <input
+                type="number"
+                min="1"
+                value={capacity}
+                onChange={(e) => setCapacity(Number(e.target.value))}
+                className="mt-1 h-9 w-full rounded-md border border-border bg-white px-2.5 text-xs text-ink transition hover:border-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              />
+            </label>
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-8 text-xs"
+              onClick={resetForm}
+              disabled={upsertMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="h-8 text-xs font-semibold"
+              disabled={upsertMutation.isPending}
+            >
+              {upsertMutation.isPending ? 'Saving...' : editingSlot ? 'Save Changes' : 'Schedule Slot'}
+            </Button>
+          </div>
+        </form>
+      )}
+
+      {slotsQuery.isLoading ? (
+        <p className="text-xs text-muted">Loading timeslots...</p>
+      ) : slotsQuery.isError ? (
+        <p className="text-xs text-red-600">Failed to load timeslots.</p>
+      ) : slots.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-slate-200 bg-white/40 py-6 text-center text-xs text-muted">
+          No slots scheduled for this offer yet. Click "Add Slot" to schedule one.
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+          <div className="hidden grid-cols-12 gap-2 border-b border-slate-200 bg-slate-50/50 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-muted sm:grid">
+            <div className="col-span-5">Starts At & Ends At</div>
+            <div className="col-span-3">Capacity & Bookings</div>
+            <div className="col-span-2">Status</div>
+            <div className="col-span-2 text-right">Actions</div>
+          </div>
+          <div className="divide-y divide-slate-100">
+            {slots.map((slot) => {
+              return (
+                <div
+                  key={slot.id}
+                  className="grid gap-2 p-3 text-xs sm:grid-cols-12 sm:items-center sm:px-4 sm:py-2.5 hover:bg-slate-50/20"
+                >
+                  <div className="col-span-5 space-y-0.5">
+                    <span className="font-semibold text-ink block sm:inline">
+                      {formatDateTime(slot.startsAt)}
+                    </span>
+                    <span className="hidden sm:inline text-muted/75 mx-1.5">to</span>
+                    <span className="text-muted block sm:inline">
+                      {formatDateTime(slot.endsAt)}
+                    </span>
+                  </div>
+
+                  <div className="col-span-3 flex items-center gap-1.5 text-muted">
+                    <Users size={12} />
+                    <span>
+                      {slot.bookedCount} / {slot.capacity} booked ({slot.availableCount} left)
+                    </span>
+                  </div>
+
+                  <div className="col-span-2">
+                    <Badge
+                      tone={
+                        slot.status === 'Active'
+                          ? 'success'
+                          : slot.status === 'Full'
+                          ? 'warning'
+                          : 'muted'
+                      }
+                    >
+                      {slot.status}
+                    </Badge>
+                  </div>
+
+                  <div className="col-span-2 flex items-center justify-end gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="h-7 w-7 p-0 text-muted hover:text-ink"
+                      onClick={() => startEdit(slot)}
+                    >
+                      <PencilLine size={13} />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      disabled={deleteMutation.isPending}
+                      onClick={() => {
+                        if (confirm('Are you sure you want to delete this scheduled timeslot?')) {
+                          deleteMutation.mutate(slot.id)
+                        }
+                      }}
+                    >
+                      <Trash2 size={13} />
+                    </Button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
