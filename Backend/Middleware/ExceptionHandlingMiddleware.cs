@@ -16,23 +16,27 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
         }
         catch (ValidationException exception)
         {
+            logger.LogWarning("API validation failed: {Errors}", string.Join("; ", exception.Errors.Select(e => e.ErrorMessage)));
             await WriteErrorAsync(context, HttpStatusCode.BadRequest, "Validation failed.", exception.Errors.Select(error => error.ErrorMessage));
         }
-        catch (DbUpdateConcurrencyException)
+        catch (DbUpdateConcurrencyException exception)
         {
+            logger.LogWarning(exception, "Database update concurrency conflict detected.");
             await WriteErrorAsync(context, HttpStatusCode.Conflict, "This slot was just reserved by another customer. Please choose a different slot.");
         }
         catch (BadHttpRequestException exception)
         {
+            logger.LogWarning(exception, "Bad HTTP request exception with status code {StatusCode}", exception.StatusCode);
             await WriteErrorAsync(context, (HttpStatusCode)exception.StatusCode, exception.Message);
         }
         catch (InvalidOperationException exception)
         {
+            logger.LogWarning("API operational failure: {Message}", exception.Message);
             await WriteErrorAsync(context, HttpStatusCode.BadRequest, exception.Message);
         }
         catch (Exception exception)
         {
-            logger.LogError(exception, "Unhandled API exception");
+            logger.LogError(exception, "Unhandled system-wide exception in request pipeline");
             await WriteErrorAsync(context, HttpStatusCode.InternalServerError, "An unexpected error occurred.");
         }
     }
