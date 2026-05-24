@@ -15,6 +15,7 @@ import { getApiErrorMessage } from '../../utils/http'
 import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
 import { PageHeader } from '../../components/ui/PageHeader'
+import { useDialogA11y } from '../../hooks/useDialogA11y'
 
 const offerSchema = z
   .object({
@@ -59,6 +60,13 @@ export function Offers() {
   const [page, setPage] = useState(1)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editing, setEditing] = useState<OfferSummary | null>(null)
+
+  const closeForm = () => {
+    setEditing(null)
+    setIsFormOpen(false)
+  }
+
+  const dialogRef = useDialogA11y<HTMLDivElement>({ isOpen: isFormOpen, onClose: closeForm })
 
   const businessesQuery = useQuery({
     queryKey: ['businesses'],
@@ -344,20 +352,22 @@ export function Offers() {
       ) : null}
 
       {isFormOpen ? (
-        <div className="fixed inset-0 z-40 bg-ink/20 px-4 py-6 backdrop-blur-sm">
-          <div className="ml-auto w-full max-w-xl rounded-lg border border-border bg-white p-6 shadow-soft">
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-ink/20 px-4 py-6 backdrop-blur-sm">
+          <div
+            ref={dialogRef}
+            className="w-full max-w-xl rounded-lg border border-border bg-white p-6 shadow-soft max-h-[90vh] overflow-y-auto"
+            role="dialog"
+            aria-modal="true"
+          >
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-lg font-semibold text-ink">{editing ? 'Edit offer' : 'New offer'}</h2>
-                <p className="mt-1 text-sm">Use a practical setup here. Slots and availability controls will come in the next phase.</p>
+                <p className="mt-1 text-sm text-muted">Use a practical setup here. Slots and availability controls will come in the next phase.</p>
               </div>
               <Button
                 type="button"
                 variant="ghost"
-                onClick={() => {
-                  setEditing(null)
-                  setIsFormOpen(false)
-                }}
+                onClick={closeForm}
               >
                 Close
               </Button>
@@ -414,10 +424,7 @@ export function Offers() {
                 <Button
                   type="button"
                   variant="ghost"
-                  onClick={() => {
-                    setEditing(null)
-                    setIsFormOpen(false)
-                  }}
+                  onClick={closeForm}
                 >
                   Cancel
                 </Button>

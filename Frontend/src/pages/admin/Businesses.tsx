@@ -10,6 +10,7 @@ import { getApiErrorMessage } from '../../utils/http'
 import type { BusinessSummary } from '../../types/business'
 import { Button } from '../../components/ui/Button'
 import { PageHeader } from '../../components/ui/PageHeader'
+import { useDialogA11y } from '../../hooks/useDialogA11y'
 
 const businessSchema = z.object({
   name: z.string().min(2).max(180),
@@ -28,6 +29,13 @@ export function Businesses() {
   const queryClient = useQueryClient()
   const [editing, setEditing] = useState<BusinessSummary | null>(null)
   const [isFormOpen, setIsFormOpen] = useState(false)
+
+  const closeForm = () => {
+    setEditing(null)
+    setIsFormOpen(false)
+  }
+
+  const dialogRef = useDialogA11y<HTMLDivElement>({ isOpen: isFormOpen, onClose: closeForm })
 
   const businessesQuery = useQuery({
     queryKey: ['businesses'],
@@ -148,20 +156,22 @@ export function Businesses() {
       )}
 
       {isFormOpen ? (
-        <div className="fixed inset-0 z-40 bg-ink/20 px-4 py-6 backdrop-blur-sm">
-          <div className="ml-auto w-full max-w-lg rounded-lg border border-border bg-white p-6 shadow-soft">
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-ink/20 px-4 py-6 backdrop-blur-sm">
+          <div
+            ref={dialogRef}
+            className="w-full max-w-lg rounded-lg border border-border bg-white p-6 shadow-soft max-h-[90vh] overflow-y-auto"
+            role="dialog"
+            aria-modal="true"
+          >
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-lg font-semibold text-ink">{editing ? 'Edit business' : 'New business'}</h2>
-                <p className="mt-1 text-sm">Keep this lightweight for now. Offers can be attached as soon as the business exists.</p>
+                <p className="mt-1 text-sm text-muted">Keep this lightweight for now. Offers can be attached as soon as the business exists.</p>
               </div>
               <Button
                 type="button"
                 variant="ghost"
-                onClick={() => {
-                  setEditing(null)
-                  setIsFormOpen(false)
-                }}
+                onClick={closeForm}
               >
                 Close
               </Button>
@@ -194,10 +204,7 @@ export function Businesses() {
                 <Button
                   type="button"
                   variant="ghost"
-                  onClick={() => {
-                    setEditing(null)
-                    setIsFormOpen(false)
-                  }}
+                  onClick={closeForm}
                 >
                   Cancel
                 </Button>
