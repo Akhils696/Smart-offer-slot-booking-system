@@ -9,6 +9,7 @@ export const ROUTES = {
   admin: {
     root: '/admin',
     dashboard: '/admin/dashboard',
+    businesses: '/admin/businesses',
     offers: '/admin/offers',
     bookings: '/admin/bookings',
   },

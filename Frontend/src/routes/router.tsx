@@ -3,6 +3,7 @@ import { AdminLayout } from '../layouts/AdminLayout'
 import { AppLayout } from '../layouts/AppLayout'
 import { PublicLayout } from '../layouts/PublicLayout'
 import { Bookings } from '../pages/admin/Bookings'
+import { Businesses } from '../pages/admin/Businesses'
 import { Dashboard } from '../pages/admin/Dashboard'
 import { Offers } from '../pages/admin/Offers'
 import { Login } from '../pages/auth/Login'
@@ -32,6 +33,7 @@ export const router = createBrowserRouter([
             children: [
               { index: true, element: <Navigate to={ROUTES.admin.dashboard} replace /> },
               { path: ROUTES.admin.dashboard, element: <Dashboard /> },
+              { path: ROUTES.admin.businesses, element: <Businesses /> },
               { path: ROUTES.admin.offers, element: <Offers /> },
               { path: ROUTES.admin.bookings, element: <Bookings /> },
             ],

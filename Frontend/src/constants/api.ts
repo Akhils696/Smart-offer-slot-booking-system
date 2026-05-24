@@ -4,6 +4,7 @@ export const API_ENDPOINTS = {
   auth: {
     login: '/auth/login',
   },
+  businesses: '/businesses',
   offers: '/offers',
   bookings: '/bookings',
 } as const

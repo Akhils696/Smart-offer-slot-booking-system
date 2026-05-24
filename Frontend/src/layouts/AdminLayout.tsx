@@ -8,6 +8,7 @@ import { cn } from '../utils/cn'
 
 const navItems = [
   { label: 'Dashboard', href: ROUTES.admin.dashboard, icon: LayoutDashboard },
+  { label: 'Businesses', href: ROUTES.admin.businesses, icon: CalendarDays },
   { label: 'Offers', href: ROUTES.admin.offers, icon: Tag },
   { label: 'Bookings', href: ROUTES.admin.bookings, icon: TicketCheck },
 ]

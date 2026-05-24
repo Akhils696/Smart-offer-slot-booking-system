@@ -1,6 +1,7 @@
 import { apiClient } from '../api/client'
 import { API_ENDPOINTS } from '../constants/api'
-import type { ApiResponse, LoginRequest, LoginResponse } from '../types/auth'
+import type { ApiResponse } from '../types/api'
+import type { LoginRequest, LoginResponse } from '../types/auth'
 
 export async function login(payload: LoginRequest) {
   const response = await apiClient.post<ApiResponse<LoginResponse>>(API_ENDPOINTS.auth.login, payload)
