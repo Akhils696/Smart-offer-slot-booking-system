@@ -55,28 +55,30 @@ export function Login() {
 
         <form className="mt-8 space-y-5" onSubmit={handleSubmit(onSubmit)}>
           <label className="block">
-            <span className="text-sm font-medium text-ink">Email</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted">Email</span>
             <input
-              className="mt-2 h-11 w-full rounded-md border border-border px-3 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+              className="mt-1.5 h-10 w-full rounded-md border border-border bg-white px-3 text-sm text-ink transition placeholder:text-muted/65 hover:border-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
               type="email"
+              placeholder="e.g. admin@smartoffer.local"
               autoComplete="email"
               {...register('email')}
             />
             {formState.errors.email ? (
-              <span className="mt-1 block text-sm text-red-600">{formState.errors.email.message}</span>
+              <span className="mt-1 block text-xs text-red-600">{formState.errors.email.message}</span>
             ) : null}
           </label>
 
           <label className="block">
-            <span className="text-sm font-medium text-ink">Password</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted">Password</span>
             <input
-              className="mt-2 h-11 w-full rounded-md border border-border px-3 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+              className="mt-1.5 h-10 w-full rounded-md border border-border bg-white px-3 text-sm text-ink transition placeholder:text-muted/65 hover:border-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
               type="password"
+              placeholder="••••••••"
               autoComplete="current-password"
               {...register('password')}
             />
             {formState.errors.password ? (
-              <span className="mt-1 block text-sm text-red-600">{formState.errors.password.message}</span>
+              <span className="mt-1 block text-xs text-red-600">{formState.errors.password.message}</span>
             ) : null}
           </label>
 

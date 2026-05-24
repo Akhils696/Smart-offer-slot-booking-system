@@ -375,8 +375,11 @@ export function Offers() {
 
             <form className="mt-6 space-y-4" onSubmit={form.handleSubmit((values) => offerMutation.mutate(values))}>
               <label className="block">
-                <span className="text-sm font-medium text-ink">Business</span>
-                <select className="mt-2 h-11 w-full rounded-md border border-border px-3" {...form.register('businessId')}>
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted">Business</span>
+                <select
+                  className="mt-1.5 h-10 w-full rounded-md border border-border bg-white px-3 text-sm text-ink transition hover:border-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  {...form.register('businessId')}
+                >
                   {(businessesQuery.data ?? []).map((business) => (
                     <option key={business.id} value={business.id}>
                       {business.name}
@@ -386,37 +389,65 @@ export function Offers() {
               </label>
 
               <label className="block">
-                <span className="text-sm font-medium text-ink">Title</span>
-                <input className="mt-2 h-11 w-full rounded-md border border-border px-3" {...form.register('title')} />
-                {form.formState.errors.title ? <span className="mt-1 block text-sm text-red-600">{form.formState.errors.title.message}</span> : null}
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted">Title</span>
+                <input
+                  className="mt-1.5 h-10 w-full rounded-md border border-border bg-white px-3 text-sm text-ink transition placeholder:text-muted/65 hover:border-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  placeholder="e.g. Weekend Spa Getaway"
+                  {...form.register('title')}
+                />
+                {form.formState.errors.title ? <span className="mt-1 block text-xs text-red-600">{form.formState.errors.title.message}</span> : null}
               </label>
 
               <label className="block">
-                <span className="text-sm font-medium text-ink">Description</span>
-                <textarea className="mt-2 min-h-28 w-full rounded-md border border-border px-3 py-3" {...form.register('description')} />
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted">Description</span>
+                <textarea
+                  className="mt-1.5 min-h-24 w-full rounded-md border border-border bg-white px-3 py-2 text-sm text-ink transition placeholder:text-muted/65 hover:border-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  placeholder="Describe your special offer and highlight slot details..."
+                  {...form.register('description')}
+                />
               </label>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block">
-                  <span className="text-sm font-medium text-ink">Original price</span>
-                  <input className="mt-2 h-11 w-full rounded-md border border-border px-3" type="number" step="0.01" {...form.register('originalPrice')} />
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted">Original price</span>
+                  <input
+                    className="mt-1.5 h-10 w-full rounded-md border border-border bg-white px-3 text-sm text-ink transition hover:border-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    type="number"
+                    step="0.01"
+                    placeholder="e.g. 1500"
+                    {...form.register('originalPrice')}
+                  />
                 </label>
                 <label className="block">
-                  <span className="text-sm font-medium text-ink">Offer price</span>
-                  <input className="mt-2 h-11 w-full rounded-md border border-border px-3" type="number" step="0.01" {...form.register('offerPrice')} />
-                  {form.formState.errors.offerPrice ? <span className="mt-1 block text-sm text-red-600">{form.formState.errors.offerPrice.message}</span> : null}
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted">Offer price</span>
+                  <input
+                    className="mt-1.5 h-10 w-full rounded-md border border-border bg-white px-3 text-sm text-ink transition hover:border-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    type="number"
+                    step="0.01"
+                    placeholder="e.g. 750"
+                    {...form.register('offerPrice')}
+                  />
+                  {form.formState.errors.offerPrice ? <span className="mt-1 block text-xs text-red-600">{form.formState.errors.offerPrice.message}</span> : null}
                 </label>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block">
-                  <span className="text-sm font-medium text-ink">Starts at</span>
-                  <input className="mt-2 h-11 w-full rounded-md border border-border px-3" type="datetime-local" {...form.register('startsAt')} />
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted">Starts at</span>
+                  <input
+                    className="mt-1.5 h-10 w-full rounded-md border border-border bg-white px-3 text-sm text-ink transition hover:border-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    type="datetime-local"
+                    {...form.register('startsAt')}
+                  />
                 </label>
                 <label className="block">
-                  <span className="text-sm font-medium text-ink">Ends at</span>
-                  <input className="mt-2 h-11 w-full rounded-md border border-border px-3" type="datetime-local" {...form.register('endsAt')} />
-                  {form.formState.errors.endsAt ? <span className="mt-1 block text-sm text-red-600">{form.formState.errors.endsAt.message}</span> : null}
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted">Ends at</span>
+                  <input
+                    className="mt-1.5 h-10 w-full rounded-md border border-border bg-white px-3 text-sm text-ink transition hover:border-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    type="datetime-local"
+                    {...form.register('endsAt')}
+                  />
+                  {form.formState.errors.endsAt ? <span className="mt-1 block text-xs text-red-600">{form.formState.errors.endsAt.message}</span> : null}
                 </label>
               </div>
 

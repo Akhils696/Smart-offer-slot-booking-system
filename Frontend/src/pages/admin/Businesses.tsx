@@ -179,25 +179,41 @@ export function Businesses() {
 
             <form className="mt-6 space-y-4" onSubmit={form.handleSubmit((values) => businessMutation.mutate(values))}>
               <label className="block">
-                <span className="text-sm font-medium text-ink">Name</span>
-                <input className="mt-2 h-11 w-full rounded-md border border-border px-3" {...form.register('name')} />
-                {form.formState.errors.name ? <span className="mt-1 block text-sm text-red-600">{form.formState.errors.name.message}</span> : null}
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted">Name</span>
+                <input
+                  className="mt-1.5 h-10 w-full rounded-md border border-border bg-white px-3 text-sm text-ink transition placeholder:text-muted/65 hover:border-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  placeholder="e.g. Acme Wellness Hub"
+                  {...form.register('name')}
+                />
+                {form.formState.errors.name ? <span className="mt-1 block text-xs text-red-600">{form.formState.errors.name.message}</span> : null}
               </label>
 
               <label className="block">
-                <span className="text-sm font-medium text-ink">Slug</span>
-                <input className="mt-2 h-11 w-full rounded-md border border-border px-3" {...form.register('slug')} />
-                {form.formState.errors.slug ? <span className="mt-1 block text-sm text-red-600">{form.formState.errors.slug.message}</span> : null}
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted">Slug</span>
+                <input
+                  className="mt-1.5 h-10 w-full rounded-md border border-border bg-white px-3 text-sm text-ink transition placeholder:text-muted/65 hover:border-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  placeholder="e.g. acme-wellness"
+                  {...form.register('slug')}
+                />
+                {form.formState.errors.slug ? <span className="mt-1 block text-xs text-red-600">{form.formState.errors.slug.message}</span> : null}
               </label>
 
               <label className="block">
-                <span className="text-sm font-medium text-ink">Description</span>
-                <textarea className="mt-2 min-h-28 w-full rounded-md border border-border px-3 py-3" {...form.register('description')} />
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted">Description</span>
+                <textarea
+                  className="mt-1.5 min-h-24 w-full rounded-md border border-border bg-white px-3 py-2 text-sm text-ink transition placeholder:text-muted/65 hover:border-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  placeholder="Tell customers about the business..."
+                  {...form.register('description')}
+                />
               </label>
 
               <label className="block">
-                <span className="text-sm font-medium text-ink">Phone number</span>
-                <input className="mt-2 h-11 w-full rounded-md border border-border px-3" {...form.register('phoneNumber')} />
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted">Phone number</span>
+                <input
+                  className="mt-1.5 h-10 w-full rounded-md border border-border bg-white px-3 text-sm text-ink transition placeholder:text-muted/65 hover:border-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  placeholder="e.g. +91 98765 43210"
+                  {...form.register('phoneNumber')}
+                />
               </label>
 
               <div className="flex items-center justify-end gap-3 pt-2">
