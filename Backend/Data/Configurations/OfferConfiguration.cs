@@ -19,10 +19,11 @@ public sealed class OfferConfiguration : IEntityTypeConfiguration<Offer>
         builder.Property(offer => offer.StartsAt).IsRequired();
         builder.Property(offer => offer.EndsAt).IsRequired();
         builder.Property(offer => offer.CreatedAt).IsRequired();
+        builder.Property(offer => offer.UpdatedAt).IsRequired();
 
         builder.HasOne(offer => offer.Business)
             .WithMany(business => business.Offers)
             .HasForeignKey(offer => offer.BusinessId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

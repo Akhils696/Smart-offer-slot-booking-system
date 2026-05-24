@@ -8,6 +8,7 @@ public sealed class OfferSlot
     public DateTimeOffset EndsAt { get; set; }
     public int Capacity { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
 
     public Offer Offer { get; set; } = null!;
     public ICollection<Booking> Bookings { get; set; } = [];

@@ -15,12 +15,13 @@ public sealed class OfferSlotConfiguration : IEntityTypeConfiguration<OfferSlot>
         builder.Property(slot => slot.EndsAt).IsRequired();
         builder.Property(slot => slot.Capacity).IsRequired();
         builder.Property(slot => slot.CreatedAt).IsRequired();
+        builder.Property(slot => slot.UpdatedAt).IsRequired();
 
         builder.HasIndex(slot => new { slot.OfferId, slot.StartsAt });
 
         builder.HasOne(slot => slot.Offer)
             .WithMany(offer => offer.Slots)
             .HasForeignKey(slot => slot.OfferId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

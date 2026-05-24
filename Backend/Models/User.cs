@@ -8,6 +8,7 @@ public sealed class User
     public string PasswordHash { get; set; } = string.Empty;
     public UserRole Role { get; set; } = UserRole.Customer;
     public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
 
     public ICollection<Business> Businesses { get; set; } = [];
     public ICollection<Booking> Bookings { get; set; } = [];

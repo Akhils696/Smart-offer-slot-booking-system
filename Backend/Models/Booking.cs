@@ -8,6 +8,7 @@ public sealed class Booking
     public string ReferenceCode { get; set; } = string.Empty;
     public BookingStatus Status { get; set; } = BookingStatus.Pending;
     public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
 
     public User User { get; set; } = null!;
     public OfferSlot OfferSlot { get; set; } = null!;

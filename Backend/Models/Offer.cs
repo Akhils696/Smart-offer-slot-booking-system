@@ -12,6 +12,7 @@ public sealed class Offer
     public DateTimeOffset StartsAt { get; set; }
     public DateTimeOffset EndsAt { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
 
     public Business Business { get; set; } = null!;
     public ICollection<OfferSlot> Slots { get; set; } = [];

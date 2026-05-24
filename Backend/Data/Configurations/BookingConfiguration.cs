@@ -14,6 +14,7 @@ public sealed class BookingConfiguration : IEntityTypeConfiguration<Booking>
         builder.Property(booking => booking.ReferenceCode).HasMaxLength(32).IsRequired();
         builder.Property(booking => booking.Status).HasConversion<string>().HasMaxLength(40).IsRequired();
         builder.Property(booking => booking.CreatedAt).IsRequired();
+        builder.Property(booking => booking.UpdatedAt).IsRequired();
 
         builder.HasIndex(booking => booking.ReferenceCode).IsUnique();
         builder.HasIndex(booking => new { booking.UserId, booking.OfferSlotId });
@@ -26,6 +27,6 @@ public sealed class BookingConfiguration : IEntityTypeConfiguration<Booking>
         builder.HasOne(booking => booking.OfferSlot)
             .WithMany(slot => slot.Bookings)
             .HasForeignKey(booking => booking.OfferSlotId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

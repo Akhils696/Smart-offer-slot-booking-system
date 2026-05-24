@@ -1,5 +1,6 @@
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using SmartOfferBookingSystem.Data.Seed;
 using SmartOfferBookingSystem.Helpers;
 using SmartOfferBookingSystem.Interfaces;
 using SmartOfferBookingSystem.Mappings;
@@ -12,7 +13,11 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         services.AddScoped<SystemStatusService>();
+        services.AddScoped<AuthService>();
+        services.AddScoped<DevelopmentDataSeeder>();
         services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
+        services.AddSingleton<IJwtTokenService, JwtTokenService>();
+        services.AddSingleton<IPasswordService, PasswordService>();
 
         return services;
     }

@@ -16,6 +16,7 @@ public sealed class BusinessConfiguration : IEntityTypeConfiguration<Business>
         builder.Property(business => business.Description).HasMaxLength(1200);
         builder.Property(business => business.PhoneNumber).HasMaxLength(40);
         builder.Property(business => business.CreatedAt).IsRequired();
+        builder.Property(business => business.UpdatedAt).IsRequired();
 
         builder.HasIndex(business => business.Slug).IsUnique();
 
