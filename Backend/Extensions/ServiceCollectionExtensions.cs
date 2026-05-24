@@ -1,4 +1,5 @@
 using FluentValidation;
+using FluentValidation.AspNetCore;
 using SmartOfferBookingSystem.Helpers;
 using SmartOfferBookingSystem.Interfaces;
 using SmartOfferBookingSystem.Mappings;
@@ -19,6 +20,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddValidation(this IServiceCollection services)
     {
         services.AddValidatorsFromAssemblyContaining<Program>();
+        services.AddFluentValidationAutoValidation();
         return services;
     }
 
