@@ -13,7 +13,7 @@ public sealed class OfferSlotConfiguration : IEntityTypeConfiguration<OfferSlot>
 
         builder.Property(slot => slot.StartsAt).IsRequired();
         builder.Property(slot => slot.EndsAt).IsRequired();
-                builder.Property(slot => slot.Capacity).IsRequired();
+        builder.Property(slot => slot.Capacity).IsRequired();
         builder.Property(slot => slot.BookedCount).HasDefaultValue(0).IsRequired();
         builder.Property(slot => slot.Version).IsRowVersion();
         builder.Property(slot => slot.CreatedAt).IsRequired();

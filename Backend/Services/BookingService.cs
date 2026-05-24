@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SmartOfferBookingSystem.Data.Context;
 using SmartOfferBookingSystem.DTOs.Bookings;
+using SmartOfferBookingSystem.Exceptions;
 using SmartOfferBookingSystem.Interfaces;
 using SmartOfferBookingSystem.Models;
 
@@ -47,10 +48,9 @@ public sealed class BookingService(
         var customerEmail = string.IsNullOrWhiteSpace(request.CustomerEmail) ? null : request.CustomerEmail.Trim().ToLowerInvariant();
         var customerPhone = request.CustomerPhone.Trim();
 
-        // 1. Idempotency Protection: Check for rapid duplicate bookings (2-minute window)
         var recentCutoff = clock.UtcNow.AddMinutes(-2);
         var duplicateExists = await dbContext.Bookings.AnyAsync(b =>
-            (customerEmail != null && b.CustomerEmail == customerEmail || b.CustomerPhone == customerPhone) &&
+            ((customerEmail != null && b.CustomerEmail == customerEmail) || b.CustomerPhone == customerPhone) &&
             b.OfferSlotId == request.OfferSlotId &&
             b.Status != BookingStatus.Cancelled &&
             b.CreatedAt >= recentCutoff,
@@ -62,7 +62,6 @@ public sealed class BookingService(
             throw new InvalidOperationException("A duplicate booking attempt was detected. Please wait 2 minutes before retrying.");
         }
 
-        // 2. Transaction Boundary for Concurrency Verification
         using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
@@ -87,7 +86,6 @@ public sealed class BookingService(
                 throw new InvalidOperationException("Bookings can only be made on active offers.");
             }
 
-            // Enforce max bookings limit per customer phone number
             var activeBookingsForPhone = await dbContext.Bookings
                 .CountAsync(b =>
                     b.CustomerPhone == customerPhone &&
@@ -127,7 +125,6 @@ public sealed class BookingService(
                 UpdatedAt = now
             };
 
-            // Increment slot booked count
             slot.BookedCount += request.PeopleCount;
             slot.UpdatedAt = now;
             dbContext.OfferSlots.Update(slot);
@@ -146,7 +143,7 @@ public sealed class BookingService(
         {
             await transaction.RollbackAsync(cancellationToken);
             logger.LogWarning("Concurrency collision detected on slot reservation for {SlotId}", request.OfferSlotId);
-            throw new InvalidOperationException("This slot was just reserved by another customer. Please choose a different slot.");
+            throw new ConflictException("This slot was just reserved by another customer. Please choose a different slot.");
         }
         catch (Exception)
         {
@@ -217,7 +214,6 @@ public sealed class BookingService(
             booking.Status = parsedStatus;
             booking.UpdatedAt = clock.UtcNow;
 
-            // Handle BookedCount adjustments on slot based on status transition
             if (parsedStatus == BookingStatus.Cancelled && oldStatus != BookingStatus.Cancelled)
             {
                 booking.OfferSlot.BookedCount = Math.Max(0, booking.OfferSlot.BookedCount - booking.PeopleCount);

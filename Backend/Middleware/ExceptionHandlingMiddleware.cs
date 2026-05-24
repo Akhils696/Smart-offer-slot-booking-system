@@ -42,7 +42,6 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
         }
         catch (InvalidOperationException exception)
         {
-            // Generic operational failures — business rule violations treated as 422
             logger.LogWarning("Operational failure: {Message}", exception.Message);
             await WriteErrorAsync(context, HttpStatusCode.UnprocessableEntity, exception.Message);
         }

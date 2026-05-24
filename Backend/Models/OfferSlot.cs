@@ -7,7 +7,7 @@ public sealed class OfferSlot
     public DateTimeOffset StartsAt { get; set; }
     public DateTimeOffset EndsAt { get; set; }
     public int Capacity { get; set; }
-    public int BookedCount { get; set; } = 0; // Stored count for performance/concurrency
+    public int BookedCount { get; set; } = 0;
     public uint Version { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }

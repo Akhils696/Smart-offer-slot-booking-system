@@ -29,15 +29,17 @@ public sealed class DashboardService(
         
         var totalBookings = await bookingsQuery.CountAsync(cancellationToken);
         
-        var todayStart = clock.UtcNow.Date;
+        var todayStart = new DateTimeOffset(clock.UtcNow.UtcDateTime.Date, TimeSpan.Zero);
         var todayBookings = await bookingsQuery.CountAsync(b => b.CreatedAt >= todayStart, cancellationToken);
 
-        var totalCapacity = await slotsQuery.SumAsync(s => s.Capacity, cancellationToken);
-        
-        // BookedSeats is the sum of PeopleCount for active (non-cancelled) bookings
+        var totalCapacity = await slotsQuery
+            .Select(s => (int?)s.Capacity)
+            .SumAsync(cancellationToken) ?? 0;
+
         var bookedSeats = await bookingsQuery
             .Where(b => b.Status != BookingStatus.Cancelled)
-            .SumAsync(b => b.PeopleCount, cancellationToken);
+            .Select(b => (int?)b.PeopleCount)
+            .SumAsync(cancellationToken) ?? 0;
 
         var availableSeats = Math.Max(totalCapacity - bookedSeats, 0);
 
