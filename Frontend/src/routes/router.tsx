@@ -9,6 +9,7 @@ import { Login } from '../pages/auth/Login'
 import { Home } from '../pages/public/Home'
 import { OfferDetails } from '../pages/public/OfferDetails'
 import { ROUTES } from '../constants/routes'
+import { ProtectedRoute } from './ProtectedRoute'
 
 export const router = createBrowserRouter([
   {
@@ -23,13 +24,18 @@ export const router = createBrowserRouter([
       },
       { path: ROUTES.auth.login, element: <Login /> },
       {
-        path: ROUTES.admin.root,
-        element: <AdminLayout />,
+        element: <ProtectedRoute />,
         children: [
-          { index: true, element: <Navigate to={ROUTES.admin.dashboard} replace /> },
-          { path: ROUTES.admin.dashboard, element: <Dashboard /> },
-          { path: ROUTES.admin.offers, element: <Offers /> },
-          { path: ROUTES.admin.bookings, element: <Bookings /> },
+          {
+            path: ROUTES.admin.root,
+            element: <AdminLayout />,
+            children: [
+              { index: true, element: <Navigate to={ROUTES.admin.dashboard} replace /> },
+              { path: ROUTES.admin.dashboard, element: <Dashboard /> },
+              { path: ROUTES.admin.offers, element: <Offers /> },
+              { path: ROUTES.admin.bookings, element: <Bookings /> },
+            ],
+          },
         ],
       },
     ],

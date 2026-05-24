@@ -2,6 +2,8 @@ import { CalendarDays, LayoutDashboard, Tag, TicketCheck } from 'lucide-react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { Container } from '../components/common/Container'
 import { ROUTES } from '../constants/routes'
+import { Button } from '../components/ui/Button'
+import { useAuth } from '../hooks/useAuth'
 import { cn } from '../utils/cn'
 
 const navItems = [
@@ -11,6 +13,8 @@ const navItems = [
 ]
 
 export function AdminLayout() {
+  const { logout, user } = useAuth()
+
   return (
     <div className="min-h-screen bg-surface">
       <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-border bg-white lg:block">
@@ -46,7 +50,14 @@ export function AdminLayout() {
               <p className="text-xs font-medium uppercase text-muted">Admin workspace</p>
               <p className="text-sm font-semibold text-ink">Offer operations</p>
             </div>
-            <div className="h-9 rounded-md border border-border bg-white px-3 py-2 text-sm text-muted">Owner</div>
+            <div className="flex items-center gap-3">
+              <div className="hidden rounded-md border border-border bg-white px-3 py-2 text-sm text-muted sm:block">
+                {user?.fullName ?? 'Admin'}
+              </div>
+              <Button type="button" variant="secondary" onClick={logout}>
+                Logout
+              </Button>
+            </div>
           </Container>
         </header>
         <main className="py-8">

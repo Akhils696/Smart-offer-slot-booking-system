@@ -1,7 +1,13 @@
+import { useMutation } from '@tanstack/react-query'
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
+import toast from 'react-hot-toast'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '../../components/ui/Button'
+import { ROUTES } from '../../constants/routes'
+import { useAuth } from '../../hooks/useAuth'
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -11,13 +17,35 @@ const loginSchema = z.object({
 type LoginForm = z.infer<typeof loginSchema>
 
 export function Login() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { isAuthenticated, isReady, login } = useAuth()
   const { register, handleSubmit, formState } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
   })
 
+  const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? ROUTES.admin.dashboard
+
+  const loginMutation = useMutation({
+    mutationFn: login,
+    onSuccess: async (_, variables) => {
+      toast.success(`Welcome back, ${variables.email}`)
+      await navigate(from, { replace: true })
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Unable to sign in.')
+    },
+  })
+
   const onSubmit = (values: LoginForm) => {
-    console.info('Login form ready for API integration', values.email)
+    loginMutation.mutate(values)
   }
+
+  useEffect(() => {
+    if (isReady && isAuthenticated) {
+      void navigate(ROUTES.admin.dashboard, { replace: true })
+    }
+  }, [isAuthenticated, isReady, navigate])
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-surface px-4 py-10">
@@ -52,10 +80,14 @@ export function Login() {
             ) : null}
           </label>
 
-          <Button className="w-full" type="submit">
-            Continue
+          <Button className="w-full" type="submit" disabled={loginMutation.isPending}>
+            {loginMutation.isPending ? 'Signing in...' : 'Continue'}
           </Button>
         </form>
+
+        <div className="mt-6 rounded-md border border-border bg-surface px-4 py-3 text-sm text-muted">
+          Demo admin: <span className="font-medium text-ink">admin@smartoffer.local</span>
+        </div>
       </section>
     </main>
   )
