@@ -16,6 +16,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<AuthService>();
         services.AddScoped<BusinessService>();
         services.AddScoped<OfferService>();
+        services.AddScoped<SlotService>();
         services.AddScoped<DevelopmentDataSeeder>();
         services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
