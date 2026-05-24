@@ -1,0 +1,156 @@
+using System;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using SmartOfferBookingSystem.Data.Context;
+
+#nullable disable
+
+namespace SmartOfferBookingSystem.Data.Migrations;
+
+[DbContext(typeof(AppDbContext))]
+partial class AppDbContextModelSnapshot : ModelSnapshot
+{
+    protected override void BuildModel(ModelBuilder modelBuilder)
+    {
+        modelBuilder
+            .HasAnnotation("ProductVersion", "8.0.22")
+            .HasAnnotation("Relational:MaxIdentifierLength", 63);
+
+        NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+        modelBuilder.Entity("SmartOfferBookingSystem.Models.Booking", b =>
+        {
+            b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+            b.Property<DateTimeOffset>("CreatedAt").HasColumnType("timestamp with time zone");
+            b.Property<Guid>("OfferSlotId").HasColumnType("uuid");
+            b.Property<string>("ReferenceCode").IsRequired().HasMaxLength(32).HasColumnType("character varying(32)");
+            b.Property<string>("Status").IsRequired().HasMaxLength(40).HasColumnType("character varying(40)");
+            b.Property<Guid>("UserId").HasColumnType("uuid");
+            b.HasKey("Id");
+            b.HasIndex("OfferSlotId");
+            b.HasIndex("ReferenceCode").IsUnique();
+            b.HasIndex("UserId", "OfferSlotId");
+            b.ToTable("bookings", (string)null);
+        });
+
+        modelBuilder.Entity("SmartOfferBookingSystem.Models.Business", b =>
+        {
+            b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+            b.Property<DateTimeOffset>("CreatedAt").HasColumnType("timestamp with time zone");
+            b.Property<string>("Description").HasMaxLength(1200).HasColumnType("character varying(1200)");
+            b.Property<string>("Name").IsRequired().HasMaxLength(180).HasColumnType("character varying(180)");
+            b.Property<Guid>("OwnerId").HasColumnType("uuid");
+            b.Property<string>("PhoneNumber").HasMaxLength(40).HasColumnType("character varying(40)");
+            b.Property<string>("Slug").IsRequired().HasMaxLength(220).HasColumnType("character varying(220)");
+            b.HasKey("Id");
+            b.HasIndex("OwnerId");
+            b.HasIndex("Slug").IsUnique();
+            b.ToTable("businesses", (string)null);
+        });
+
+        modelBuilder.Entity("SmartOfferBookingSystem.Models.Offer", b =>
+        {
+            b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+            b.Property<Guid>("BusinessId").HasColumnType("uuid");
+            b.Property<DateTimeOffset>("CreatedAt").HasColumnType("timestamp with time zone");
+            b.Property<string>("Description").HasMaxLength(1600).HasColumnType("character varying(1600)");
+            b.Property<DateTimeOffset>("EndsAt").HasColumnType("timestamp with time zone");
+            b.Property<decimal>("OfferPrice").HasPrecision(10, 2).HasColumnType("numeric(10,2)");
+            b.Property<decimal>("OriginalPrice").HasPrecision(10, 2).HasColumnType("numeric(10,2)");
+            b.Property<DateTimeOffset>("StartsAt").HasColumnType("timestamp with time zone");
+            b.Property<string>("Status").IsRequired().HasMaxLength(40).HasColumnType("character varying(40)");
+            b.Property<string>("Title").IsRequired().HasMaxLength(220).HasColumnType("character varying(220)");
+            b.HasKey("Id");
+            b.HasIndex("BusinessId");
+            b.ToTable("offers", (string)null);
+        });
+
+        modelBuilder.Entity("SmartOfferBookingSystem.Models.OfferSlot", b =>
+        {
+            b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+            b.Property<int>("Capacity").HasColumnType("integer");
+            b.Property<DateTimeOffset>("CreatedAt").HasColumnType("timestamp with time zone");
+            b.Property<DateTimeOffset>("EndsAt").HasColumnType("timestamp with time zone");
+            b.Property<Guid>("OfferId").HasColumnType("uuid");
+            b.Property<DateTimeOffset>("StartsAt").HasColumnType("timestamp with time zone");
+            b.HasKey("Id");
+            b.HasIndex("OfferId", "StartsAt");
+            b.ToTable("offer_slots", (string)null);
+        });
+
+        modelBuilder.Entity("SmartOfferBookingSystem.Models.User", b =>
+        {
+            b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+            b.Property<DateTimeOffset>("CreatedAt").HasColumnType("timestamp with time zone");
+            b.Property<string>("Email").IsRequired().HasMaxLength(256).HasColumnType("character varying(256)");
+            b.Property<string>("FullName").IsRequired().HasMaxLength(160).HasColumnType("character varying(160)");
+            b.Property<string>("PasswordHash").IsRequired().HasMaxLength(512).HasColumnType("character varying(512)");
+            b.Property<string>("Role").IsRequired().HasMaxLength(40).HasColumnType("character varying(40)");
+            b.HasKey("Id");
+            b.HasIndex("Email").IsUnique();
+            b.ToTable("users", (string)null);
+        });
+
+        modelBuilder.Entity("SmartOfferBookingSystem.Models.Booking", b =>
+        {
+            b.HasOne("SmartOfferBookingSystem.Models.OfferSlot", "OfferSlot")
+                .WithMany("Bookings")
+                .HasForeignKey("OfferSlotId")
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
+
+            b.HasOne("SmartOfferBookingSystem.Models.User", "User")
+                .WithMany("Bookings")
+                .HasForeignKey("UserId")
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired();
+
+            b.Navigation("OfferSlot");
+            b.Navigation("User");
+        });
+
+        modelBuilder.Entity("SmartOfferBookingSystem.Models.Business", b =>
+        {
+            b.HasOne("SmartOfferBookingSystem.Models.User", "Owner")
+                .WithMany("Businesses")
+                .HasForeignKey("OwnerId")
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired();
+
+            b.Navigation("Owner");
+        });
+
+        modelBuilder.Entity("SmartOfferBookingSystem.Models.Offer", b =>
+        {
+            b.HasOne("SmartOfferBookingSystem.Models.Business", "Business")
+                .WithMany("Offers")
+                .HasForeignKey("BusinessId")
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
+
+            b.Navigation("Business");
+        });
+
+        modelBuilder.Entity("SmartOfferBookingSystem.Models.OfferSlot", b =>
+        {
+            b.HasOne("SmartOfferBookingSystem.Models.Offer", "Offer")
+                .WithMany("Slots")
+                .HasForeignKey("OfferId")
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
+
+            b.Navigation("Offer");
+        });
+
+        modelBuilder.Entity("SmartOfferBookingSystem.Models.Business", b => b.Navigation("Offers"));
+        modelBuilder.Entity("SmartOfferBookingSystem.Models.Offer", b => b.Navigation("Slots"));
+        modelBuilder.Entity("SmartOfferBookingSystem.Models.OfferSlot", b => b.Navigation("Bookings"));
+        modelBuilder.Entity("SmartOfferBookingSystem.Models.User", b =>
+        {
+            b.Navigation("Bookings");
+            b.Navigation("Businesses");
+        });
+    }
+}
