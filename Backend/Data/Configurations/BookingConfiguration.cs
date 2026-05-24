@@ -11,6 +11,8 @@ public sealed class BookingConfiguration : IEntityTypeConfiguration<Booking>
         builder.ToTable("bookings");
         builder.HasKey(booking => booking.Id);
 
+        builder.Property(booking => booking.CustomerName).HasMaxLength(180).IsRequired();
+        builder.Property(booking => booking.CustomerEmail).HasMaxLength(220).IsRequired();
         builder.Property(booking => booking.ReferenceCode).HasMaxLength(32).IsRequired();
         builder.Property(booking => booking.Status).HasConversion<string>().HasMaxLength(40).IsRequired();
         builder.Property(booking => booking.CreatedAt).IsRequired();
@@ -22,7 +24,8 @@ public sealed class BookingConfiguration : IEntityTypeConfiguration<Booking>
         builder.HasOne(booking => booking.User)
             .WithMany(user => user.Bookings)
             .HasForeignKey(booking => booking.UserId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.SetNull);
 
         builder.HasOne(booking => booking.OfferSlot)
             .WithMany(slot => slot.Bookings)
