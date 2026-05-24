@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 using SmartOfferBookingSystem.Common;
 
 namespace SmartOfferBookingSystem.Middleware;
@@ -16,6 +17,10 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
         catch (ValidationException exception)
         {
             await WriteErrorAsync(context, HttpStatusCode.BadRequest, "Validation failed.", exception.Errors.Select(error => error.ErrorMessage));
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            await WriteErrorAsync(context, HttpStatusCode.Conflict, "This slot was just reserved by another customer. Please choose a different slot.");
         }
         catch (BadHttpRequestException exception)
         {
